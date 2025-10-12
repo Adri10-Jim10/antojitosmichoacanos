@@ -1,5 +1,7 @@
 let carritoVisible = false;
 let carrito = [];
+let isLoggedIn = false;
+let username = '';
 
 function toggleCarrito() {
 	const cart = document.getElementById('carrito');
@@ -8,6 +10,10 @@ function toggleCarrito() {
 }
 
 function agregarAlCarrito(nombre, precio) {
+	if (!isLoggedIn) {
+		abrirModal('login');
+		return;
+	}
 	carrito.push({ nombre, precio });
 	renderCarrito();
 }
@@ -39,12 +45,66 @@ function eliminarItem(index) {
 
 /* Modal funciones */
 function abrirModal(tipo) {
-	const modal = document.getElementById('modal');
-	const titulo = document.getElementById('modal-titulo');
-	modal.style.display = 'flex';
-	titulo.textContent = tipo === 'login' ? 'Iniciar sesión' : 'Registro de usuario';
+    const modal = document.getElementById('modal');
+    modal.style.display = 'flex';
+    switchTab(null, tipo);
 }
 
 function cerrarModal() {
 	document.getElementById('modal').style.display = 'none';
+}
+
+function switchTab(evt, tabName) {
+    let i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tab-link");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(tabName).style.display = "block";
+    if (evt) {
+        evt.currentTarget.className += " active";
+    } else {
+        // Find the button that corresponds to tabName and add active class
+        const tabButton = document.querySelector(`.tab-link[onclick*="'${tabName}'"]`);
+        if (tabButton) {
+            tabButton.className += " active";
+        }
+    }
+}
+
+function login() {
+	const userInput = document.getElementById('user-input').value;
+	if (userInput) {
+		isLoggedIn = true;
+		username = userInput;
+		cerrarModal();
+		actualizarHeader();
+	}
+}
+
+function logout() {
+	isLoggedIn = false;
+	username = '';
+	actualizarHeader();
+}
+
+function actualizarHeader() {
+	const userActions = document.querySelector('.user-actions');
+	if (isLoggedIn) {
+		userActions.innerHTML = `
+			<span class="welcome-user">Hola, ${username}</span>
+			<button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+			<button class="btn-cart" onclick="toggleCarrito()">🛒 Carrito</button>
+		`;
+	} else {
+		userActions.innerHTML = `
+			<button class="btn-login" onclick="abrirModal('login')">Iniciar sesión</button>
+			<button class="btn-register" onclick="abrirModal('register')">Registrarse</button>
+			<button class="btn-cart" onclick="toggleCarrito()">🛒 Carrito</button>
+		`;
+	}
 }

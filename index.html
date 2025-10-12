@@ -81,17 +81,48 @@
 	</div>
 
 	<!-- Modal -->
-	<div class="modal" id="modal">
-		<div class="modal-content" id="modal-content">
-			<h3 id="modal-titulo">Iniciar sesión</h3>
-			<input type="text" placeholder="Usuario" style="width:100%; margin-top:10px;">
-			<input type="password" placeholder="Contraseña" style="width:100%; margin-top:10px;">
-			<div class="modal-buttons">
-				<button onclick="cerrarModal()">Cancelar</button>
-				<button>Aceptar</button>
-			</div>
-		</div>
-	</div>
+    <div class="modal" id="modal">
+        <div class="modal-content" id="modal-content">
+            <div class="modal-header">
+                <div class="modal-tabs">
+                    <button class="tab-link active" onclick="switchTab(event, 'login')">Iniciar sesión</button>
+                    <button class="tab-link" onclick="switchTab(event, 'register')">Registrarse</button>
+                </div>
+                <button class="close-modal" onclick="cerrarModal()">&times;</button>
+            </div>
+
+            <div id="login" class="tab-content active">
+                <div class="modal-body">
+                    <input type="text" id="user-input" placeholder="Usuario">
+                    <input type="password" placeholder="Contraseña">
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-primary" onclick="login()">Iniciar sesión</button>
+                </div>
+            </div>
+
+            <div id="register" class="tab-content">
+                <div class="modal-body">
+                    <input type="text" placeholder="Nombre de usuario">
+                    <input type="email" placeholder="Correo electrónico">
+                    <input type="password" placeholder="Contraseña">
+                    <input type="password" placeholder="Confirmar contraseña">
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-primary">Crear cuenta</button>
+                </div>
+            </div>
+
+            <div class="social-login">
+                <p>O inicia sesión con</p>
+                <div class="social-buttons">
+                    <button class="social-google">Google</button>
+                    <button class="social-facebook">Facebook</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 	<footer class="footer">
 		<p>© 2025 Antojitos Michoacanos - Todos los derechos reservados</p>

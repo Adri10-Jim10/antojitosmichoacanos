@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Antojitos Michoacanos - Ecommerce</title>
+	<link rel="stylesheet" href="style_index.css">
+</head>
+<body>
+
+	<header class="header">
+		<div class="logo">
+			<img src="img/logo.png" alt="Antojitos Michoacanos" width="56" height="56">
+		</div>
+
+		<h1>Antojitos Michoacanos</h1>
+
+		<nav class="nav">
+			<a href="#">Inicio</a>
+			<a href="#">Menú</a>
+			<a href="#">Ofertas</a>
+			<a href="#">Contacto</a>
+		</nav>
+
+		<div class="user-actions">
+			<button class="btn-login" onclick="abrirModal('login')">Iniciar sesión</button>
+			<button class="btn-register" onclick="abrirModal('registro')">Registrarse</button>
+			<button class="btn-cart" onclick="toggleCarrito()">🛒 Carrito</button>
+		</div>
+	</header>
+
+	<section class="hero">
+		<div>
+			<h2>¡Los mejores tacos, quesadillas y gorditas de Michoacán!</h2>
+			<p>Ordena tus antojitos favoritos y recíbelos en minutos.</p>
+			<div class="search">
+				<input type="text" placeholder="Buscar antojito...">
+				<button>Buscar</button>
+			</div>
+		</div>
+		<img src="img/logo.png" alt="Antojitos Michoacanos" style="border-radius:12px; width:100%;">
+	</section>
+
+	<main class="container">
+		<h2>Menú</h2>
+		<div class="grid">
+			<div class="card">
+				<img src="img/tacos.jpg" alt="Tacos">
+				<h3>Tacos</h3>
+				<p class="price">$25 c/u</p>
+				<button onclick="agregarAlCarrito('Tacos', 25)">Agregar al carrito</button>
+			</div>
+
+			<div class="card">
+				<img src="img/quesadillas.jpg" alt="Quesadillas">
+				<h3>Quesadillas</h3>
+				<p class="price">$30 c/u</p>
+				<button onclick="agregarAlCarrito('Quesadillas', 30)">Agregar al carrito</button>
+			</div>
+
+			<div class="card">
+				<img src="img/gorditas.jpg" alt="Gorditas">
+				<h3>Gorditas</h3>
+				<p class="price">$35 c/u</p>
+				<button onclick="agregarAlCarrito('Gorditas', 35)">Agregar al carrito</button>
+			</div>
+		</div>
+	</main>
+
+	<!-- Carrito -->
+	<div class="cart" id="carrito" style="display:none;">
+		<header>
+			<h3>Tu carrito</h3>
+			<button onclick="toggleCarrito()">✖</button>
+		</header>
+		<div class="items" id="items"></div>
+		<div class="foot">
+			<p><strong>Total:</strong> $<span id="total">0</span></p>
+			<button class="btn-checkout">Finalizar compra</button>
+		</div>
+	</div>
+
+	<!-- Modal -->
+	<div class="modal" id="modal">
+		<div class="modal-content" id="modal-content">
+			<h3 id="modal-titulo">Iniciar sesión</h3>
+			<input type="text" placeholder="Usuario" style="width:100%; margin-top:10px;">
+			<input type="password" placeholder="Contraseña" style="width:100%; margin-top:10px;">
+			<div class="modal-buttons">
+				<button onclick="cerrarModal()">Cancelar</button>
+				<button>Aceptar</button>
+			</div>
+		</div>
+	</div>
+
+	<footer class="footer">
+		<p>© 2025 Antojitos Michoacanos - Todos los derechos reservados</p>
+	</footer>
+
+	<script src="script_index.js"></script>
+</body>
+</html>

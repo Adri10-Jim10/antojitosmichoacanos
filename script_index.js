@@ -10,12 +10,18 @@ function toggleCarrito() {
 }
 
 function agregarAlCarrito(nombre, precio) {
-	if (!isLoggedIn) {
-		abrirModal('login');
-		return;
-	}
 	carrito.push({ nombre, precio });
 	renderCarrito();
+}
+
+function finalizarCompra() {
+    if (!isLoggedIn) {
+        abrirModal('login');
+    } else {
+        alert('¡Compra finalizada con éxito!');
+        carrito = [];
+        renderCarrito();
+    }
 }
 
 function renderCarrito() {

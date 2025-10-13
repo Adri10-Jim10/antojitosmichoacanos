@@ -48,21 +48,21 @@
 				<img src="img/tacos.jpg" alt="Tacos">
 				<h3>Tacos</h3>
 				<p class="price">$25 c/u</p>
-				<button onclick="agregarAlCarrito('Tacos', 25)">Agregar al carrito</button>
+				<button onclick="abrirModalGuisos('Tacos', 25)">Seleccionar guiso</button>
 			</div>
 
 			<div class="card">
 				<img src="img/quesadillas.jpg" alt="Quesadillas">
 				<h3>Quesadillas</h3>
 				<p class="price">$30 c/u</p>
-				<button onclick="agregarAlCarrito('Quesadillas', 30)">Agregar al carrito</button>
+				<button onclick="abrirModalGuisos('Quesadillas', 30)">Seleccionar guiso</button>
 			</div>
 
 			<div class="card">
 				<img src="img/gorditas.jpg" alt="Gorditas">
 				<h3>Gorditas</h3>
 				<p class="price">$35 c/u</p>
-				<button onclick="agregarAlCarrito('Gorditas', 35)">Agregar al carrito</button>
+				<button onclick="abrirModalGuisos('Gorditas', 35)">Seleccionar guiso</button>
 			</div>
 		</div>
 	</main>
@@ -123,6 +123,51 @@
             </div>
         </div>
     </div>
+
+<!-- Modal de selección de guisos -->
+<div class="modal" id="modalGuisos">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="tituloGuisos">Seleccionar Guisos</h3>
+            <button class="close-modal" onclick="cerrarModalGuisos()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Selecciona la cantidad de cada guiso:</p>
+
+            <div class="guiso-item">
+                <span>Pastor</span>
+                <div class="cantidad-control">
+                    <button onclick="cambiarCantidad('pastor', -1)">-</button>
+                    <input type="number" id="cantidad-pastor" value="0" min="0">
+                    <button onclick="cambiarCantidad('pastor', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="guiso-item">
+                <span>Asada</span>
+                <div class="cantidad-control">
+                    <button onclick="cambiarCantidad('asada', -1)">-</button>
+                    <input type="number" id="cantidad-asada" value="0" min="0">
+                    <button onclick="cambiarCantidad('asada', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="guiso-item">
+                <span>Surtida</span>
+                <div class="cantidad-control">
+                    <button onclick="cambiarCantidad('surtida', -1)">-</button>
+                    <input type="number" id="cantidad-surtida" value="0" min="0">
+                    <button onclick="cambiarCantidad('surtida', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-primary" onclick="confirmarGuisos()">Agregar al carrito</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 	<footer class="footer">
 		<p>© 2025 Antojitos Michoacanos - Todos los derechos reservados</p>

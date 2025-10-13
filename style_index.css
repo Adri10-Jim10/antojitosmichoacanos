@@ -423,3 +423,120 @@ body {
 		right: 4%;
 	}
 }
+
+/* =============================
+   Modal de selección de guisos
+============================= */
+
+#modalGuisos .modal-content {
+	padding: 24px;
+	border-radius: 16px;
+	background: #fff;
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+	width: 420px;
+	max-width: 90%;
+}
+
+#modalGuisos .modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+}
+
+#modalGuisos .modal-header h3 {
+	font-size: 1.25rem;
+	color: #333;
+	margin: 0;
+}
+
+#modalGuisos .modal-body {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+#modalGuisos p {
+	margin: 0;
+	color: #666;
+	font-size: 0.95rem;
+	text-align: center;
+}
+
+.guiso-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background: #fafafa;
+	padding: 10px 14px;
+	border-radius: 10px;
+	border: 1px solid #eee;
+	transition: background 0.2s ease;
+}
+
+.guiso-item:hover {
+	background: #fff5ef;
+}
+
+.guiso-item span {
+	font-weight: 600;
+	color: #333;
+}
+
+.cantidad-control {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.cantidad-control button {
+	width: 32px;
+	height: 32px;
+	border: none;
+	background-color: var(--accent);
+	color: white;
+	font-size: 18px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.cantidad-control button:hover {
+	transform: scale(1.1);
+	background-color: #b83b0d;
+}
+
+.cantidad-control input {
+	width: 60px;
+	text-align: center;
+	padding: 8px;
+	border-radius: 8px;
+	border: 1px solid #ccc;
+	font-weight: 600;
+	font-size: 1rem;
+}
+
+#modalGuisos .modal-buttons {
+	margin-top: 18px;
+}
+
+#modalGuisos .btn-primary {
+	width: 100%;
+	padding: 12px;
+	border-radius: 10px;
+	font-size: 1rem;
+}
+
+/* =============================
+   Mensaje de error en cantidad
+============================= */
+.error-msg {
+	display: none;
+	color: #e74c3c;
+	font-size: 0.8rem;
+	margin-top: 4px;
+	font-weight: 500;
+	text-align: right;
+}

@@ -119,3 +119,89 @@ function actualizarHeader() {
 		`;
 	}
 }
+
+/* ==============================
+   SECCIÓN DE GUISOS
+================================= */
+
+let productoSeleccionado = '';
+let precioSeleccionado = 0;
+
+function abrirModalGuisos(nombre, precio) {
+    productoSeleccionado = nombre;
+    precioSeleccionado = precio;
+
+    // Reiniciar cantidades
+    document.getElementById('cantidad-pastor').value = 0;
+    document.getElementById('cantidad-asada').value = 0;
+    document.getElementById('cantidad-surtida').value = 0;
+
+    document.getElementById('tituloGuisos').textContent = `Seleccionar guisos - ${nombre}`;
+    document.getElementById('modalGuisos').style.display = 'flex';
+}
+
+function cerrarModalGuisos() {
+    document.getElementById('modalGuisos').style.display = 'none';
+}
+
+function cambiarCantidad(guiso, delta) {
+    const input = document.getElementById(`cantidad-${guiso}`);
+    let valor = parseInt(input.value) + delta;
+    if (valor < 0) valor = 0;
+    input.value = valor;
+}
+
+function confirmarGuisos() {
+    const pastor = parseInt(document.getElementById('cantidad-pastor').value);
+    const asada = parseInt(document.getElementById('cantidad-asada').value);
+    const surtida = parseInt(document.getElementById('cantidad-surtida').value);
+
+    const totalGuisos = pastor + asada + surtida;
+
+    if (totalGuisos === 0) {
+        alert('Selecciona al menos un guiso para agregar al carrito.');
+        return;
+    }
+
+    // Agrega cada guiso como producto individual en el carrito
+    if (pastor > 0) carrito.push({ nombre: `${productoSeleccionado} (Pastor x${pastor})`, precio: precioSeleccionado * pastor });
+    if (asada > 0) carrito.push({ nombre: `${productoSeleccionado} (Asada x${asada})`, precio: precioSeleccionado * asada });
+    if (surtida > 0) carrito.push({ nombre: `${productoSeleccionado} (Surtida x${surtida})`, precio: precioSeleccionado * surtida });
+
+    renderCarrito();
+    cerrarModalGuisos();
+    alert('Productos agregados al carrito con éxito.');
+}
+
+// ===============================
+// Validación mejorada de cantidad
+// ===============================
+
+document.querySelectorAll('.cantidad-control input').forEach(input => {
+
+	input.addEventListener('input', (e) => {
+		let valor = e.target.value;
+
+		// Quita todo lo que no sea número
+		valor = valor.replace(/\D/g, '');
+
+		// Si se borra todo con backspace, muestra 0 temporalmente
+		if (valor === '') {
+			valor = '0';
+		}
+
+		// Evita valores negativos o muy grandes si quieres limitarlo (ej. 99)
+		if (parseInt(valor) < 0) {
+			valor = '0';
+		}
+
+		e.target.value = valor;
+	});
+
+	input.addEventListener('blur', (e) => {
+		// Si al salir el valor es 0 o vacío, corrige a 1
+		if (e.target.value === '' || parseInt(e.target.value) === 0) {
+			e.target.value = 1;
+		}
+	});
+});

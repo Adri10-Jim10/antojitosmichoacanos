@@ -85,13 +85,13 @@
         <div class="modal-content" id="modal-content">
             <div class="modal-header">
                 <div class="modal-tabs">
-                    <button class="tab-link active" onclick="switchTab(event, 'login')">Iniciar sesión</button>
-                    <button class="tab-link" onclick="switchTab(event, 'register')">Registrarse</button>
+                    <button class="tab-link" onclick="showTab('login')">Iniciar sesión</button>
+                    <button class="tab-link" onclick="showTab('register')">Registrarse</button>
                 </div>
                 <button class="close-modal" onclick="cerrarModal()">&times;</button>
             </div>
 
-            <div id="login" class="tab-content active">
+            <div id="login" class="tab-content">
                 <div class="modal-body">
                     <input type="text" id="user-input" placeholder="Usuario">
                     <input type="password" placeholder="Contraseña">
@@ -104,13 +104,13 @@
 
             <div id="register" class="tab-content">
                 <div class="modal-body">
-                    <input type="text" placeholder="Nombre de usuario">
+                    <input type="text" id="register-user-input" placeholder="Nombre de usuario">
                     <input type="email" placeholder="Correo electrónico">
                     <input type="password" placeholder="Contraseña">
                     <input type="password" placeholder="Confirmar contraseña">
                 </div>
                 <div class="modal-buttons">
-                    <button class="btn-primary">Crear cuenta</button>
+                    <button class="btn-primary" onclick="register()">Crear cuenta</button>
                 </div>
             </div>
 

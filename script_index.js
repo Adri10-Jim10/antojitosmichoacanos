@@ -52,15 +52,15 @@ function eliminarItem(index) {
 /* Modal funciones */
 function abrirModal(tipo) {
     const modal = document.getElementById('modal');
+    showTab(tipo);
     modal.style.display = 'flex';
-    switchTab(null, tipo);
 }
 
 function cerrarModal() {
 	document.getElementById('modal').style.display = 'none';
 }
 
-function switchTab(evt, tabName) {
+function showTab(tabName) {
     let i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tab-content");
     for (i = 0; i < tabcontent.length; i++) {
@@ -71,14 +71,9 @@ function switchTab(evt, tabName) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
     document.getElementById(tabName).style.display = "block";
-    if (evt) {
-        evt.currentTarget.className += " active";
-    } else {
-        // Find the button that corresponds to tabName and add active class
-        const tabButton = document.querySelector(`.tab-link[onclick*="'${tabName}'"]`);
-        if (tabButton) {
-            tabButton.className += " active";
-        }
+    const tabButton = document.querySelector(`.tab-link[onclick*="'${tabName}'"]`);
+    if (tabButton) {
+        tabButton.className += " active";
     }
 }
 
@@ -90,6 +85,16 @@ function login() {
 		cerrarModal();
 		actualizarHeader();
 	}
+}
+
+function register() {
+    const userInput = document.getElementById('register-user-input').value;
+    if (userInput) {
+        isLoggedIn = true;
+        username = userInput;
+        cerrarModal();
+        actualizarHeader();
+    }
 }
 
 function logout() {

@@ -173,6 +173,64 @@ function confirmarGuisos() {
     alert('Productos agregados al carrito con éxito.');
 }
 
+/* ==============================
+   SECCIÓN DE BEBIDAS
+================================= */
+
+function seleccionarBebida(tipo, precio) {
+    productoSeleccionado = tipo;
+    precioSeleccionado = precio;
+
+    // Mostrar el panel correspondiente
+    document.getElementById('opcionesAguas').style.display = tipo === 'Aguas' ? 'block' : 'none';
+    document.getElementById('opcionesRefrescos').style.display = tipo === 'Refrescos' ? 'block' : 'none';
+
+    // Reiniciar cantidades
+    const inputs = document.querySelectorAll('#modalBebidas input[type="number"]');
+    inputs.forEach(input => input.value = 0);
+
+    document.getElementById('tituloBebidas').textContent = `Seleccionar ${tipo}`;
+    document.getElementById('modalBebidas').style.display = 'flex';
+}
+
+function cerrarModalBebidas() {
+    document.getElementById('modalBebidas').style.display = 'none';
+}
+
+function cambiarCantidadBebida(bebida, delta) {
+    const input = document.getElementById(`cantidad-${bebida}`);
+    let valor = parseInt(input.value) + delta;
+    if (valor < 0) valor = 0;
+    input.value = valor;
+}
+
+function confirmarBebidas() {
+    let totalBebidas = 0;
+    const bebidasSeleccionadas = productoSeleccionado === 'Aguas' ? 
+        ['jamaica', 'horchata', 'limon'] : 
+        ['coca', 'sprite', 'fanta'];
+    
+    bebidasSeleccionadas.forEach(bebida => {
+        const cantidad = parseInt(document.getElementById(`cantidad-${bebida}`).value);
+        if (cantidad > 0) {
+            carrito.push({
+                nombre: `${productoSeleccionado} (${bebida.charAt(0).toUpperCase() + bebida.slice(1)} x${cantidad})`,
+                precio: precioSeleccionado * cantidad
+            });
+            totalBebidas += cantidad;
+        }
+    });
+
+    if (totalBebidas === 0) {
+        alert('Selecciona al menos una bebida para agregar al carrito.');
+        return;
+    }
+
+    renderCarrito();
+    cerrarModalBebidas();
+    alert('Bebidas agregadas al carrito con éxito.');
+}
+
 // ===============================
 // Validación mejorada de cantidad
 // ===============================

@@ -17,7 +17,7 @@
 
 		<nav class="nav">
 			<a href="#">Inicio</a>
-			<a href="#">Menú</a>
+			<a href="#menu-section">Menú</a>
 			<a href="../Ofertas/ofertas.html">Ofertas</a>
 			<a href="#">Contacto</a>
 		</nav>
@@ -41,7 +41,7 @@
 		<img src="../img/logo.png" alt="Antojitos Michoacanos" style="border-radius:12px; width:100%;">
 	</section>
 
-	<main class="container">
+	<main class="container" id="menu-section">
 		<h2>Menú</h2>
 		<div class="grid">
 			<div class="card">
@@ -63,6 +63,20 @@
 				<h3>Gorditas</h3>
 				<p class="price">$35 c/u</p>
 				<button onclick="abrirModalGuisos('Gorditas', 35)">Seleccionar guiso</button>
+			</div>
+
+			<div class="card">
+				<img src="../img/aguas.jpg" alt="Aguas Naturales">
+				<h3>Aguas Naturales</h3>
+				<p class="price">$20 c/u</p>
+				<button onclick="seleccionarBebida('Aguas', 20)">Seleccionar sabor</button>
+			</div>
+
+			<div class="card">
+				<img src="../img/refrescos.jpg" alt="Refrescos">
+				<h3>Refrescos</h3>
+				<p class="price">$25 c/u</p>
+				<button onclick="seleccionarBebida('Refrescos', 25)">Seleccionar refresco</button>
 			</div>
 		</div>
 	</main>
@@ -123,6 +137,77 @@
             </div>
         </div>
     </div>
+
+<!-- Modal de selección de bebidas -->
+<div class="modal" id="modalBebidas">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="tituloBebidas">Seleccionar Bebida</h3>
+            <button class="close-modal" onclick="cerrarModalBebidas()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="opcionesAguas" style="display: none;">
+                <p>Selecciona el sabor del agua y cantidad:</p>
+                <div class="guiso-item">
+                    <span>Jamaica</span>
+                    <div class="cantidad-control">
+                        <button onclick="cambiarCantidadBebida('jamaica', -1)">-</button>
+                        <input type="number" id="cantidad-jamaica" value="0" min="0">
+                        <button onclick="cambiarCantidadBebida('jamaica', 1)">+</button>
+                    </div>
+                </div>
+                <div class="guiso-item">
+                    <span>Horchata</span>
+                    <div class="cantidad-control">
+                        <button onclick="cambiarCantidadBebida('horchata', -1)">-</button>
+                        <input type="number" id="cantidad-horchata" value="0" min="0">
+                        <button onclick="cambiarCantidadBebida('horchata', 1)">+</button>
+                    </div>
+                </div>
+                <div class="guiso-item">
+                    <span>Limón</span>
+                    <div class="cantidad-control">
+                        <button onclick="cambiarCantidadBebida('limon', -1)">-</button>
+                        <input type="number" id="cantidad-limon" value="0" min="0">
+                        <button onclick="cambiarCantidadBebida('limon', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="opcionesRefrescos" style="display: none;">
+                <p>Selecciona el refresco y cantidad:</p>
+                <div class="guiso-item">
+                    <span>Coca-Cola</span>
+                    <div class="cantidad-control">
+                        <button onclick="cambiarCantidadBebida('coca', -1)">-</button>
+                        <input type="number" id="cantidad-coca" value="0" min="0">
+                        <button onclick="cambiarCantidadBebida('coca', 1)">+</button>
+                    </div>
+                </div>
+                <div class="guiso-item">
+                    <span>Sprite</span>
+                    <div class="cantidad-control">
+                        <button onclick="cambiarCantidadBebida('sprite', -1)">-</button>
+                        <input type="number" id="cantidad-sprite" value="0" min="0">
+                        <button onclick="cambiarCantidadBebida('sprite', 1)">+</button>
+                    </div>
+                </div>
+                <div class="guiso-item">
+                    <span>Fanta</span>
+                    <div class="cantidad-control">
+                        <button onclick="cambiarCantidadBebida('fanta', -1)">-</button>
+                        <input type="number" id="cantidad-fanta" value="0" min="0">
+                        <button onclick="cambiarCantidadBebida('fanta', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-primary" onclick="confirmarBebidas()">Agregar al carrito</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal de selección de guisos -->
 <div class="modal" id="modalGuisos">

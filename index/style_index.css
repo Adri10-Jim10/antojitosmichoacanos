@@ -424,8 +424,13 @@ body {
 .footer {
 	padding: 18px 24px;
 	margin-top: 28px;
-	color: var(--muted);
+	background-color: #000;
+	color: #fff;
 	text-align: center;
+}
+
+.footer a {
+	color: #fff;
 }
 
 /* Responsive */

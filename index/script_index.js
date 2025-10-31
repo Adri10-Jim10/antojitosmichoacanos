@@ -55,6 +55,17 @@ function finalizarCompra() {
     }
 }
 
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.querySelector('.message').textContent = message;
+    toast.classList.add('show');
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
 function renderCarrito() {
 	const itemsDiv = document.getElementById('items');
 	const totalSpan = document.getElementById('total');
@@ -201,7 +212,7 @@ function confirmarGuisos() {
 
     renderCarrito();
     cerrarModalGuisos();
-    alert('Productos agregados al carrito con éxito.');
+    showToast('¡Productos agregados al carrito con éxito!');
 }
 
 /* ==============================
@@ -259,7 +270,7 @@ function confirmarBebidas() {
 
     renderCarrito();
     cerrarModalBebidas();
-    alert('Bebidas agregadas al carrito con éxito.');
+    showToast('¡Bebidas agregadas al carrito con éxito!');
 }
 
 // ===============================

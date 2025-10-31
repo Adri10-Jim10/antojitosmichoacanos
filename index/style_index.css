@@ -75,11 +75,163 @@ body {
 	cursor: pointer;
 }
 
+/* Estilos para los resultados de búsqueda */
+.search {
+    position: relative;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-top: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s ease;
+}
+
+.search-item:last-child {
+    border-bottom: none;
+}
+
+.search-item:hover {
+    background: #fff5ef;
+}
+
+.search-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-right: 12px;
+}
+
+.search-item-info {
+    flex: 1;
+}
+
+.search-item-info h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.search-item-info p {
+    margin: 4px 0 0;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.no-results {
+    padding: 16px;
+    text-align: center;
+    color: #666;
+}
+
+/* Carrusel de Ofertas */
+.ofertas-carousel {
+	padding: 20px 24px;
+	max-width: 1200px;
+	margin: 20px auto;
+	scroll-margin-top: 80px; /* Ajuste para el header sticky */
+}
+
+.ofertas-carousel h2 {
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+.carousel-container {
+	position: relative;
+	overflow: hidden;
+	border-radius: 12px;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-track {
+	display: flex;
+	transition: transform 0.5s ease-in-out;
+}
+
+.carousel-slide {
+	flex: 0 0 100%;
+	position: relative;
+}
+
+.carousel-slide img {
+	width: 100%;
+	height: 300px;
+	object-fit: cover;
+}
+
+.slide-content {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 20px;
+	background: linear-gradient(transparent, rgba(0,0,0,0.8));
+	color: white;
+}
+
+.slide-content h3 {
+	margin: 0;
+	font-size: 24px;
+}
+
+.slide-content p {
+	margin: 5px 0 0;
+	opacity: 0.9;
+}
+
+.carousel-button {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgba(255,255,255,0.8);
+	border: none;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	font-size: 20px;
+	cursor: pointer;
+	z-index: 2;
+	transition: all 0.3s ease;
+}
+
+.carousel-button:hover {
+	background: white;
+	box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.carousel-button.prev {
+	left: 10px;
+}
+
+.carousel-button.next {
+	right: 10px;
+}
+
 /* Productos */
 .container {
 	padding: 20px 24px;
 	max-width: 1200px;
 	margin: auto;
+	scroll-margin-top: 80px; /* Ajuste para el header sticky */
 }
 
 .grid {

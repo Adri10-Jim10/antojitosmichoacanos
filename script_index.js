@@ -105,6 +105,7 @@ async function login() {
     }
 }
 
+
 // Registro actualizado para usar API
 async function register() {
     const userInput = document.getElementById('register-user-input');

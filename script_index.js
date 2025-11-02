@@ -42,12 +42,12 @@ function renderizarMenu(productos) {
         }
 
         card.innerHTML = `
-            <img src="${producto.imagen || 'img/placeholder.jpg'}" alt="${producto.nombre}" onerror="this.src='img/placeholder.jpg'">
-            <h3>${producto.nombre}</h3>
-            <p class="description">${producto.descripcion || 'Delicioso producto'}</p>
-            <p class="price">$${producto.precio}</p>
-            ${botonHTML}
-        `;
+        <img src="${producto.imagen}" alt="${producto.nombre}" onerror="this.style.display='none'">
+        <h3>${producto.nombre}</h3>
+        <p class="description">${producto.descripcion || 'Delicioso producto'}</p>
+        <p class="price">$${producto.precio}</p>
+        ${botonHTML}
+`;
         
         grid.appendChild(card);
     });

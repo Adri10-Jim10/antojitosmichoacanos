@@ -7,6 +7,19 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 include_once '../config/database.php';
 include_once '../models/Producto.php';
 
+// Función para obtener la imagen correcta del producto
+function getProductImage($productName) {
+    $name = strtolower($productName);
+    
+    if (strpos($name, 'taco') !== false) return 'img/tacos.jpg';
+    if (strpos($name, 'quesadilla') !== false) return 'img/quesadillas.jpg';
+    if (strpos($name, 'gordita') !== false) return 'img/gorditas.jpg';
+    if (strpos($name, 'agua') !== false) return 'img/aguas.jpg';
+    if (strpos($name, 'coca') !== false || strpos($name, 'refresco') !== false) return 'img/refrescos.jpg';
+    
+    return 'img/logo.png'; // imagen por defecto que SÍ existe
+}
+
 $database = new Database();
 $db = $database->getConnection();
 $producto = new Producto($db);
@@ -26,7 +39,7 @@ if ($num > 0) {
             "precio" => $row['precio'],
             "categoria" => $row['categoria_nombre'],
             "tipo" => $row['categoria_tipo'],
-            "imagen" => "img/" . strtolower(str_replace(' ', '_', $row['nombre'])) . ".jpg"
+            "imagen" => getProductImage($row['nombre'])
         );
         array_push($menu_arr["productos"], $menu_item);
     }

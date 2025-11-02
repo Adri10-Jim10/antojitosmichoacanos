@@ -55,14 +55,14 @@ class Usuario {
         // Hash de contraseña
         $hashed_password = password_hash($this->contraseña, PASSWORD_DEFAULT);
 
-        // Insertar nuevo usuario - CORREGIDO: usar nombres de parámetros consistentes
+        // CORREGIDO: Usar :password en lugar de :contraseña
         $query = "INSERT INTO " . $this->table_name . " 
                  (usuario, contraseña, correo, tipo_registro, rol) 
-                 VALUES (:usuario, :contraseña, :correo, 'email', 'cliente')";
+                 VALUES (:usuario, :password, :correo, 'email', 'cliente')";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":usuario", $this->usuario);
-        $stmt->bindParam(":contraseña", $hashed_password);
+        $stmt->bindParam(":password", $hashed_password);
         $stmt->bindParam(":correo", $this->correo);
 
         if ($stmt->execute()) {

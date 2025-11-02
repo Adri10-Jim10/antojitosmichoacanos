@@ -10,7 +10,7 @@
 
 	<header class="header">
 		<div class="logo">
-			<img src="../img/logo.png" alt="Antojitos Michoacanos" width="56" height="56">
+			<img src="img/logo.png" alt="Antojitos Michoacanos" width="56" height="56">
 		</div>
 
 		<h1>Antojitos Michoacanos</h1>
@@ -38,7 +38,7 @@
 				<button>Buscar</button>
 			</div>
 		</div>
-		<img src="../img/logo.png" alt="Antojitos Michoacanos" style="border-radius:12px; width:100%;">
+		<img src="img/logo.png" alt="Antojitos Michoacanos" style="border-radius:12px; max-width: 300px;">
 	</section>
 
 	<section class="ofertas-carousel" id="ofertas-section">
@@ -47,21 +47,21 @@
 			<button class="carousel-button prev">❮</button>
 			<div class="carousel-track">
 				<div class="carousel-slide">
-					<img src="../img/tacos.jpg" alt="Oferta 1">
+					<img src="img/tacos.jpg" alt="Oferta 1">
 					<div class="slide-content">
 						<h3>¡2x1 en Tacos!</h3>
 						<p>Todos los martes</p>
 					</div>
 				</div>
 				<div class="carousel-slide">
-					<img src="../img/gorditas.jpg" alt="Oferta 2">
+					<img src="img/gorditas.jpg" alt="Oferta 2">
 					<div class="slide-content">
 						<h3>Gorditas a $25</h3>
 						<p>De 2 PM a 5 PM</p>
 					</div>
 				</div>
 				<div class="carousel-slide">
-					<img src="../img/aguas.jpg" alt="Oferta 3">
+					<img src="img/aguas.jpg" alt="Oferta 3">
 					<div class="slide-content">
 						<h3>Bebida Gratis</h3>
 						<p>En consumo mayor a $200</p>
@@ -74,41 +74,9 @@
 
 	<main class="container" id="menu-section">
 		<h2>Menú</h2>
-		<div class="grid">
-			<div class="card">
-				<img src="../img/tacos.jpg" alt="Tacos">
-				<h3>Tacos</h3>
-				<p class="price">$25 c/u</p>
-				<button onclick="abrirModalGuisos('Tacos', 25)">Seleccionar guiso</button>
-			</div>
-
-			<div class="card">
-				<img src="../img/quesadillas.jpg" alt="Quesadillas">
-				<h3>Quesadillas</h3>
-				<p class="price">$30 c/u</p>
-				<button onclick="abrirModalGuisos('Quesadillas', 30)">Seleccionar guiso</button>
-			</div>
-
-			<div class="card">
-				<img src="../img/gorditas.jpg" alt="Gorditas">
-				<h3>Gorditas</h3>
-				<p class="price">$35 c/u</p>
-				<button onclick="abrirModalGuisos('Gorditas', 35)">Seleccionar guiso</button>
-			</div>
-
-			<div class="card">
-				<img src="../img/aguas.jpg" alt="Aguas Naturales">
-				<h3>Aguas Naturales</h3>
-				<p class="price">$20 c/u</p>
-				<button onclick="seleccionarBebida('Aguas', 20)">Seleccionar sabor</button>
-			</div>
-
-			<div class="card">
-				<img src="../img/refrescos.jpg" alt="Refrescos">
-				<h3>Refrescos</h3>
-				<p class="price">$25 c/u</p>
-				<button onclick="seleccionarBebida('Refrescos', 25)">Seleccionar refresco</button>
-			</div>
+		<div class="grid" id="menu-grid">
+			<!-- Los productos se cargarán dinámicamente desde la API -->
+			<div class="loading">Cargando menú...</div>
 		</div>
 	</main>
 
@@ -125,21 +93,21 @@
 		</div>
 	</div>
 
-	<!-- Modal -->
-    <div class="modal" id="modal">
+	<!-- Modal Login/Register -->
+    <div class="modal" id="modal" style="display: none;">
         <div class="modal-content" id="modal-content">
             <div class="modal-header">
                 <div class="modal-tabs">
-                    <button class="tab-link" onclick="showTab('login')">Iniciar sesión</button>
+                    <button class="tab-link active" onclick="showTab('login')">Iniciar sesión</button>
                     <button class="tab-link" onclick="showTab('register')">Registrarse</button>
                 </div>
                 <button class="close-modal" onclick="cerrarModal()">&times;</button>
             </div>
 
-            <div id="login" class="tab-content">
+            <div id="login" class="tab-content" style="display: block;">
                 <div class="modal-body">
-                    <input type="text" id="user-input" placeholder="Usuario">
-                    <input type="password" placeholder="Contraseña">
+                    <input type="text" id="user-input" placeholder="Usuario o correo">
+                    <input type="password" id="login-password" placeholder="Contraseña">
                     <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
                 </div>
                 <div class="modal-buttons">
@@ -147,12 +115,12 @@
                 </div>
             </div>
 
-            <div id="register" class="tab-content">
+            <div id="register" class="tab-content" style="display: none;">
                 <div class="modal-body">
                     <input type="text" id="register-user-input" placeholder="Nombre de usuario">
-                    <input type="email" placeholder="Correo electrónico">
-                    <input type="password" placeholder="Contraseña">
-                    <input type="password" placeholder="Confirmar contraseña">
+                    <input type="email" id="register-email" placeholder="Correo electrónico">
+                    <input type="password" id="register-password" placeholder="Contraseña">
+                    <input type="password" id="register-confirm-password" placeholder="Confirmar contraseña">
                 </div>
                 <div class="modal-buttons">
                     <button class="btn-primary" onclick="register()">Crear cuenta</button>
@@ -162,15 +130,15 @@
             <div class="social-login">
                 <p>O inicia sesión con</p>
                 <div class="social-buttons">
-                    <button class="social-google">Google</button>
-                    <button class="social-facebook">Facebook</button>
+                    <button class="social-google" onclick="showToast('Login con Google - En desarrollo')">Google</button>
+                    <button class="social-facebook" onclick="showToast('Login con Facebook - En desarrollo')">Facebook</button>
                 </div>
             </div>
         </div>
     </div>
 
 <!-- Modal de selección de bebidas -->
-<div class="modal" id="modalBebidas">
+<div class="modal" id="modalBebidas" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="tituloBebidas">Seleccionar Bebida</h3>
@@ -241,7 +209,7 @@
 </div>
 
 <!-- Modal de selección de guisos -->
-<div class="modal" id="modalGuisos">
+<div class="modal" id="modalGuisos" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="tituloGuisos">Seleccionar Guisos</h3>
@@ -283,7 +251,6 @@
         </div>
     </div>
 </div>
-
 
 	<footer class="footer" id="contacto">
 		<h2>Contacto</h2>

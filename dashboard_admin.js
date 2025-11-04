@@ -272,17 +272,7 @@ function renderSectionTable(sectionName, data) {
                 <th>Acciones</th>
             `;
             break;
-        case 'pagos':
-            html += `
-                <th>ID</th>
-                <th>Pedido</th>
-                <th>Cliente</th>
-                <th>Método</th>
-                <th>Monto</th>
-                <th>Estado</th>
-                <th>Fecha</th>
-            `;
-            break;
+        
         case 'resenas':
             html += `
                 <th>ID</th>
@@ -359,9 +349,9 @@ function renderSectionTable(sectionName, data) {
                 html += `
                     <td>${item.id_pago || 'N/A'}</td>
                     <td>#${item.id_pedido || 'N/A'}</td>
-                    <td>${item.cliente || 'Cliente'}</td>
+                    <td>${item.nombre_usuario || 'Cliente'}</td>
                     <td>${item.metodo_pago || 'efectivo'}</td>
-                    <td>$${(item.monto_total || 0).toFixed(2)}</td>
+                    <td>$${parseFloat(item.monto_total || 0).toFixed(2)}</td>
                     <td><span class="badge ${item.estado || 'pendiente'}">${item.estado || 'pendiente'}</span></td>
                     <td>${fechaPago}</td>
                 `;
@@ -377,6 +367,36 @@ function renderSectionTable(sectionName, data) {
                     <td>
                         <button class="btn btn-ver" onclick="viewReview(${item.id_reseña})">Ver</button>
                         <button class="btn btn-eliminar" onclick="deleteReview(${item.id_reseña})">Eliminar</button>
+                    </td>
+                `;
+                break;
+
+            case 'productos':
+                html += `
+                    <td>${item.id_producto}</td>
+                    <td>${item.nombre}</td>
+                    <td>$${parseFloat(item.precio).toFixed(2)}</td>
+                    <td>${item.categoria_nombre || 'Sin categoría'}</td>
+                    <td>${item.stock ?? 'Sin stock'}</td>
+                    <td><span class="badge ${item.activo == 1 ? 'activo' : 'inactivo'}">${item.activo == 1 ? 'Activo' : 'Inactivo'}</span></td>
+                    <td>
+                        <button class="btn btn-editar" onclick="editProduct(${item.id_producto})">Editar</button>
+                        <button class="btn btn-eliminar" onclick="deleteProduct(${item.id_producto})">Eliminar</button>
+                    </td>
+                `;
+                break;
+
+            case 'inventario':
+                html += `
+                    <td>${item.id_almacen}</td>
+                    <td>${item.producto_nombre}</td>
+                    <td>${item.stock}</td>
+                    <td>${item.stock_minimo}</td>
+                    <td>${item.fecha_actualizacion}</td>
+                    <td>$${parseFloat(item.precio).toFixed(2)}</td>
+                    <td>${item.stock <= item.stock_minimo ? '<span class="badge alerta">Bajo</span>' : '<span class="badge ok">OK</span>'}</td>
+                    <td>
+                        <button class="btn btn-editar" onclick="editarStock(${item.id_almacen}, ${item.stock})">Editar</button>
                     </td>
                 `;
                 break;

@@ -95,8 +95,8 @@ function updateDashboardStats(stats) {
     document.getElementById('pedidos-mes').textContent = stats.pedidosEsteMes || 0;
     document.getElementById('total-usuarios').textContent = stats.totalUsuarios || 0;
     document.getElementById('total-clientes').textContent = stats.totalClientes || 0;
-    document.getElementById('total-ingresos').textContent = (stats.ingresosTotales || 0).toFixed(2);
-    document.getElementById('ingresos-mes').textContent = (stats.ingresosEsteMes || 0).toFixed(2);
+    document.getElementById('total-ingresos').textContent = parseFloat(stats.ingresosTotales || 0).toFixed(2);
+    document.getElementById('ingresos-mes').textContent = parseFloat(stats.ingresosEsteMes || 0).toFixed(2);
     document.getElementById('promedio-resenas').textContent = (stats.promedioResenas || 0).toFixed(1);
     document.getElementById('total-resenas').textContent = stats.totalResenas || 0;
 }
@@ -320,7 +320,7 @@ function renderSectionTable(sectionName, data) {
                 html += `
                     <td>#${item.id_pedido || 'N/A'}</td>
                     <td>${item.cliente || item.cliente_nombre || 'Cliente'}</td>
-                    <td>$${(item.total_pedido || 0).toFixed(2)}</td>
+                    <td>$${parseFloat(item.total_pedido || 0).toFixed(2)}</td>
                     <td>${item.tipo_pedido || 'local'}</td>
                     <td><span class="badge ${item.estado || 'pendiente'}">${item.estado || 'pendiente'}</span></td>
                     <td>${fechaPedido}</td>

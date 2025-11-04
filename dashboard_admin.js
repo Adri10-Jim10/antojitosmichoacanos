@@ -97,7 +97,7 @@ function updateDashboardStats(stats) {
     document.getElementById('total-clientes').textContent = stats.totalClientes || 0;
     document.getElementById('total-ingresos').textContent = parseFloat(stats.ingresosTotales || 0).toFixed(2);
     document.getElementById('ingresos-mes').textContent = parseFloat(stats.ingresosEsteMes || 0).toFixed(2);
-    document.getElementById('promedio-resenas').textContent = (stats.promedioResenas || 0).toFixed(1);
+    document.getElementById('promedio-resenas').textContent = parseFloat(stats.promedioResenas || 0).toFixed(1);
     document.getElementById('total-resenas').textContent = stats.totalResenas || 0;
 }
 
@@ -131,7 +131,7 @@ function renderRecentOrders(orders) {
             <tr>
                 <td>#${order.id_pedido || 'N/A'}</td>
                 <td>${order.cliente || 'Cliente'}</td>
-                <td>$${(order.total_pedido || 0).toFixed(2)}</td>
+                <td>$${parseFloat(order.total_pedido || 0).toFixed(2)}</td>
                 <td><span class="badge ${order.estado || 'pendiente'}">${order.estado || 'pendiente'}</span></td>
                 <td>${fecha}</td>
                 <td>

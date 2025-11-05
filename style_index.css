@@ -318,9 +318,8 @@ body {
 	align-items: center;
 	justify-content: center;
 	animation: fadeIn 0.3s ease-out;
-
-	/* ✅ Corrección: asegurar centrado y altura adaptable */
 	z-index: 999;
+	padding: 16px;
 }
 
 @keyframes fadeIn {
@@ -330,17 +329,14 @@ body {
 
 .modal-content {
 	background: white;
-	padding: 0;
 	border-radius: 16px;
 	width: 420px;
-	max-width: 92%;
+	max-width: 100%;
 	box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 	transform: scale(0.95);
 	animation: scaleIn 0.3s ease-out forwards;
 	overflow: hidden;
-
-	/* ✅ NUEVO: evita desbordamiento del formulario */
-	max-height: 90vh;
+	max-height: calc(100vh - 32px);
 	overflow-y: auto;
 	box-sizing: border-box;
 }
@@ -465,21 +461,21 @@ body {
 }
 
 .modal-body {
-	padding-top: 20px;
+	padding: 20px 24px;
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 }
 
-.modal-body input {
+.modal-body input,
+.modal-body select {
 	width: 100%;
 	padding: 12px 14px;
 	border-radius: 8px;
 	border: 1px solid #ddd;
 	transition: all 0.2s ease;
-
-	/* ✅ NUEVO: evita que el padding sume al ancho total */
 	box-sizing: border-box;
+	margin: 0;
 }
 
 .modal-body input:focus {
@@ -597,12 +593,20 @@ body {
 	}
 }
 
-/* ✅ NUEVO: modal adaptable en móviles */
+/* Ajustes para móviles */
 @media (max-width: 480px) {
+	.modal {
+		padding: 12px;
+	}
 	.modal-content {
-		width: 95%;
-		max-height: 90vh;
-		padding: 15px;
+		width: 100%;
+		max-height: calc(100vh - 24px);
+	}
+	.modal-body {
+		padding: 16px;
+	}
+	.modal-buttons {
+		padding: 16px;
 	}
 }
 

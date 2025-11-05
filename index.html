@@ -252,6 +252,54 @@
     </div>
 </div>
 
+<!-- Modal de Métodos de Pago -->
+<div class="modal" id="modalPago" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Métodos de pago</h3>
+            <button class="close-modal" onclick="cerrarModalPago()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="savedMethods">
+                <p style="text-align:center; color:var(--muted);">Cargando métodos guardados...</p>
+            </div>
+
+            <hr style="border:none; border-top:1px solid #eee; margin:12px 0;">
+
+            <div id="addPayment">
+                <p style="margin:0 0 8px 0; font-weight:700;">Agregar nuevo método</p>
+                <select id="payment-type" onchange="actualizarCamposPago()" style="padding:8px; border-radius:8px; border:1px solid #ddd; width:100%;">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Transferencia">Transferencia</option>
+                </select>
+                
+                <!-- Campos para Tarjeta -->
+                <div id="campos-tarjeta" style="display:none;">
+                    <input id="payment-label" type="text" placeholder="Nombre (ej. Mi tarjeta Visa)" style="margin-top:8px; padding:8px; border-radius:8px; border:1px solid #ddd; width:100%; box-sizing:border-box;">
+                    <input id="payment-number" type="text" placeholder="Número de tarjeta" style="margin-top:8px; padding:8px; border-radius:8px; border:1px solid #ddd; width:100%; box-sizing:border-box;">
+                </div>
+
+                <!-- Info para Transferencia -->
+                <div id="campos-transferencia" style="display:none; margin-top:8px; padding:12px; background:#f8f9fa; border-radius:8px;">
+                    <p style="margin:0 0 8px 0; font-weight:600;">Datos para transferencia:</p>
+                    <p style="margin:0; font-size:0.9rem;">Banco: BBVA</p>
+                    <p style="margin:4px 0 0; font-size:0.9rem;">Cuenta: 1234 5678 9012 3456</p>
+                    <p style="margin:4px 0 0; font-size:0.9rem;">A nombre de: Antojitos Michoacanos SA de CV</p>
+                </div>
+
+                <div class="modal-buttons" style="margin-top:10px;">
+                    <button onclick="guardarMetodoPago()" class="btn-primary">Guardar método</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-buttons" style="padding:16px; display:flex; gap:8px;">
+            <button onclick="cerrarModalPago()" style="flex:1; border-radius:8px; padding:10px;">Cancelar</button>
+            <button onclick="confirmarPago()" class="btn-primary" style="flex:1;">Confirmar y pagar</button>
+        </div>
+    </div>
+</div>
+
 	<footer class="footer" id="contacto">
 		<h2>Contacto</h2>
 		<p>Teléfono: 9614568013</p>

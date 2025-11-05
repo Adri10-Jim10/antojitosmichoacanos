@@ -291,12 +291,141 @@ function finalizarCompra() {
         abrirModal('login');
         return;
     }
+    // Abrir modal de métodos de pago para seleccionar/confirmar
+    abrirModalPago();
+}
+
+// ------------------ Métodos de pago ------------------
+function abrirModalPago() {
+    const modal = document.getElementById('modalPago');
+    if (modal) {
+        modal.style.display = 'flex';
+        renderSavedMethods();
+        actualizarCamposPago(); // Asegurarnos que los campos correctos estén visibles
+    }
+}
+
+function cerrarModalPago() {
+    const modal = document.getElementById('modalPago');
+    if (modal) modal.style.display = 'none';
+}
+
+function getSavedPaymentMethods() {
+    try {
+        const raw = localStorage.getItem('paymentMethods');
+        if (!raw) return [];
+        return JSON.parse(raw);
+    } catch (e) {
+        console.error('Error parseando métodos de pago:', e);
+        return [];
+    }
+}
+
+function setSavedPaymentMethods(list) {
+    localStorage.setItem('paymentMethods', JSON.stringify(list));
+}
+
+function renderSavedMethods() {
+    const container = document.getElementById('savedMethods');
+    if (!container) return;
+
+    const methods = getSavedPaymentMethods();
+    if (methods.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:var(--muted);">No tienes métodos guardados.</p>';
+        return;
+    }
+
+    let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+    methods.forEach((m, idx) => {
+        const safeLabel = m.label || m.type;
+        const masked = m.number ? (' ****' + m.number.slice(-4)) : '';
+        html += `\n            <label style="display:flex; align-items:center; gap:8px; background:#fafafa; padding:8px; border-radius:8px; border:1px solid #eee;">\n                <input type=\"radio\" name=\"selectedPayment\" value=\"${idx}\">\n                <div style=\"flex:1\">\n                    <div style=\"font-weight:700\">${safeLabel}</div>\n                    <div style=\"font-size:0.9rem; color:var(--muted)\">${m.type}${masked}</div>\n                </div>\n                <button onclick=\"eliminarMetodoPago(${idx})\" style=\"background:#ffecec; border:none; padding:6px 8px; border-radius:8px; cursor:pointer;\">Eliminar</button>\n            </label>`;
+    });
+    html += '\n</div>';
+    container.innerHTML = html;
+}
+
+function actualizarCamposPago() {
+    const tipo = document.getElementById('payment-type').value;
+    const camposTarjeta = document.getElementById('campos-tarjeta');
+    const camposTransferencia = document.getElementById('campos-transferencia');
     
-    showToast('¡Pedido realizado con éxito!');
-    // Aquí iría la lógica para crear el pedido en la BD
+    // Ocultar todos primero
+    camposTarjeta.style.display = 'none';
+    camposTransferencia.style.display = 'none';
+    
+    // Mostrar según selección
+    if (tipo === 'Tarjeta') {
+        camposTarjeta.style.display = 'block';
+    } else if (tipo === 'Transferencia') {
+        camposTransferencia.style.display = 'block';
+    }
+}
+
+function guardarMetodoPago() {
+    const type = document.getElementById('payment-type').value;
+    const label = document.getElementById('payment-label').value.trim();
+    const number = document.getElementById('payment-number').value.trim();
+
+    if (!type) {
+        showToast('Selecciona un tipo de pago');
+        return;
+    }
+    
+    // Si es efectivo o transferencia, usar tipo como etiqueta
+    if (type === 'Efectivo' || type === 'Transferencia') {
+        const methods = getSavedPaymentMethods();
+        methods.push({ type, label: type });
+        setSavedPaymentMethods(methods);
+        renderSavedMethods();
+        showToast('Método guardado');
+        return;
+    }
+
+    const methods = getSavedPaymentMethods();
+    methods.push({ type, label: label || type, number });
+    setSavedPaymentMethods(methods);
+    renderSavedMethods();
+    document.getElementById('payment-label').value = '';
+    document.getElementById('payment-number').value = '';
+    showToast('Método guardado');
+}
+
+function eliminarMetodoPago(index) {
+    const methods = getSavedPaymentMethods();
+    if (index < 0 || index >= methods.length) return;
+    methods.splice(index, 1);
+    setSavedPaymentMethods(methods);
+    renderSavedMethods();
+    showToast('Método eliminado');
+}
+
+function confirmarPago() {
+    const radios = document.getElementsByName('selectedPayment');
+    let selectedIndex = -1;
+    for (let r of radios) {
+        if (r.checked) {
+            selectedIndex = parseInt(r.value);
+            break;
+        }
+    }
+
+    if (selectedIndex === -1) {
+        // Si no seleccionó método pero eligió Efectivo directo desde selector en formulario, permitir pagar en efectivo temporal
+        const tempType = document.getElementById('payment-type').value;
+        if (!tempType) {
+            showToast('Selecciona un método de pago');
+            return;
+        }
+        // Si llega aquí, asumimos que quiere pagar con el tipo seleccionado en el formulario
+    }
+
+    // Aquí se podría enviar la orden y el método al backend. Por ahora simulamos éxito y limpiamos carrito.
+    showToast('Pago procesado. ¡Pedido confirmado!');
     carrito = [];
     renderCarrito();
     toggleCarrito();
+    cerrarModalPago();
 }
 
 // Funciones de modales

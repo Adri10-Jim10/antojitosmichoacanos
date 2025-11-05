@@ -135,5 +135,48 @@ class Carrito {
         
         return $stmt1->execute() && $stmt2->execute();
     }
+
+    public function checkout($id_usuario, $tipo_pedido, $tipo_venta, $total_pedido) {
+        // 1. Iniciar transacción
+        $this->conn->beginTransaction();
+
+        try {
+            // 2. Crear el pedido
+            $query_pedido = "INSERT INTO pedidos (id_carrito, id_usuario, fecha_pedido, tipo_pedido, estado, total_pedido, tipo_venta)
+                             VALUES (:id_carrito, :id_usuario, NOW(), :tipo_pedido, 'pendiente', :total_pedido, :tipo_venta)";
+            
+            $stmt_pedido = $this->conn->prepare($query_pedido);
+            $stmt_pedido->bindParam(":id_carrito", $this->id_carrito);
+            $stmt_pedido->bindParam(":id_usuario", $id_usuario);
+            $stmt_pedido->bindParam(":tipo_pedido", $tipo_pedido);
+            $stmt_pedido->bindParam(":total_pedido", $total_pedido);
+            $stmt_pedido->bindParam(":tipo_venta", $tipo_venta);
+            
+            if (!$stmt_pedido->execute()) {
+                throw new Exception("Error al crear el pedido.");
+            }
+            
+            $id_pedido = $this->conn->lastInsertId();
+
+            // 3. Desactivar el carrito
+            $query_desactivar = "UPDATE " . $this->table_carrito . " SET activo = 0 WHERE id_carrito = :id_carrito";
+            $stmt_desactivar = $this->conn->prepare($query_desactivar);
+            $stmt_desactivar->bindParam(":id_carrito", $this->id_carrito);
+
+            if (!$stmt_desactivar->execute()) {
+                throw new Exception("Error al desactivar el carrito.");
+            }
+
+            // 4. Confirmar transacción
+            $this->conn->commit();
+            
+            return $id_pedido;
+
+        } catch (Exception $e) {
+            // 5. Revertir en caso de error
+            $this->conn->rollBack();
+            return false;
+        }
+    }
 }
 ?>

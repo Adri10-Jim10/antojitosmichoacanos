@@ -157,7 +157,7 @@ function renderCharts(chartData) {
     if (charts.pedidos) charts.pedidos.destroy();
     
     charts.pedidos = new Chart(pedidosCtx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: chartData.pedidosEstados?.labels || ['Pendiente', 'Preparando', 'Listo', 'Entregado', 'Cancelado'],
             datasets: [{
@@ -411,24 +411,103 @@ function renderSectionTable(sectionName, data) {
     container.innerHTML = html;
 }
 
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    if (toast) {
+        const icon = toast.querySelector('.icon');
+        const messageElement = toast.querySelector('.message');
+        
+        if (icon) icon.textContent = isError ? '❌' : '✅';
+        if (messageElement) messageElement.textContent = message;
+        
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+}
+
 // Funciones de acciones
 function viewOrder(orderId) {
-    alert(`Ver pedido #${orderId}`);
+    showToast(`Ver pedido #${orderId} - En desarrollo`);
     // Implementar modal de detalles del pedido
 }
 
 function editOrder(orderId) {
-    alert(`Editar pedido #${orderId}`);
-    // Implementar edición de pedido
+    const modal = document.getElementById('editOrderModal');
+    document.getElementById('editOrderId').textContent = orderId;
+    modal.style.display = 'block';
+}
+
+function closeEditOrderModal() {
+    const modal = document.getElementById('editOrderModal');
+    modal.style.display = 'none';
+}
+
+async function updateOrderStatus() {
+    const orderId = document.getElementById('editOrderId').textContent;
+    const newStatus = document.getElementById('orderStatus').value;
+
+    try {
+        const response = await fetch('api/admin_pedidos.php', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id_pedido: orderId, estado: newStatus })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeEditOrderModal();
+            loadDashboardData(); // Recargar datos del dashboard
+            loadSectionData('pedidos'); // Recargar tabla de pedidos
+            showToast('Estado del pedido actualizado');
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error actualizando estado:', error);
+        showToast('Error de conexión al actualizar el estado', true);
+    }
 }
 
 function editUser(userId) {
-    alert(`Editar usuario #${userId}`);
+    showToast(`Editar usuario #${userId} - En desarrollo`);
     // Implementar edición de usuario
 }
 
+function showConfirm(title, message, onConfirm) {
+    const modal = document.getElementById('confirmModal');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+
+    const confirmOkButton = document.getElementById('confirmOkButton');
+    const confirmCancelButton = document.getElementById('confirmCancelButton');
+
+    const okListener = () => {
+        modal.style.display = 'none';
+        onConfirm();
+        confirmOkButton.removeEventListener('click', okListener);
+        confirmCancelButton.removeEventListener('click', cancelListener);
+    };
+
+    const cancelListener = () => {
+        modal.style.display = 'none';
+        confirmOkButton.removeEventListener('click', okListener);
+        confirmCancelButton.removeEventListener('click', cancelListener);
+    };
+
+    confirmOkButton.addEventListener('click', okListener);
+    confirmCancelButton.addEventListener('click', cancelListener);
+
+    modal.style.display = 'flex';
+}
+
 function deleteUser(userId) {
-    if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+    showConfirm('Eliminar Usuario', '¿Estás seguro de que quieres eliminar este usuario?', () => {
         fetch('api/admin_usuarios.php', {
             method: 'DELETE',
             headers: {
@@ -440,24 +519,24 @@ function deleteUser(userId) {
         .then(data => {
             if (data.success) {
                 showSection('usuarios');
-                alert('Usuario eliminado correctamente');
+                showToast('Usuario eliminado correctamente');
             } else {
-                alert('Error: ' + data.message);
+                showToast('Error: ' + data.message, true);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al eliminar usuario');
+            showToast('Error al eliminar usuario', true);
         });
-    }
+    });
 }
 
 function viewReview(reviewId) {
-    alert(`Ver reseña #${reviewId}`);
+    showToast(`Ver reseña #${reviewId} - En desarrollo`);
 }
 
 function deleteReview(reviewId) {
-    if (confirm('¿Estás seguro de que quieres eliminar esta reseña?')) {
+    showConfirm('Eliminar Reseña', '¿Estás seguro de que quieres eliminar esta reseña?', () => {
         fetch('api/admin_resenas.php', {
             method: 'DELETE',
             headers: {
@@ -469,16 +548,16 @@ function deleteReview(reviewId) {
         .then(data => {
             if (data.success) {
                 showSection('resenas');
-                alert('Reseña eliminada correctamente');
+                showToast('Reseña eliminada correctamente');
             } else {
-                alert('Error: ' + data.message);
+                showToast('Error: ' + data.message, true);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al eliminar reseña');
+            showToast('Error al eliminar reseña', true);
         });
-    }
+    });
 }
 
 // Cerrar sesión

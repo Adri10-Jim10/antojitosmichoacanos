@@ -348,17 +348,13 @@ function renderSavedMethods() {
 function actualizarCamposPago() {
     const tipo = document.getElementById('payment-type').value;
     const camposTarjeta = document.getElementById('campos-tarjeta');
-    const camposTransferencia = document.getElementById('campos-transferencia');
     
     // Ocultar todos primero
     camposTarjeta.style.display = 'none';
-    camposTransferencia.style.display = 'none';
     
     // Mostrar según selección
-    if (tipo === 'Tarjeta') {
+    if (tipo === 'tarjeta_credito' || tipo === 'tarjeta_debito') {
         camposTarjeta.style.display = 'block';
-    } else if (tipo === 'Transferencia') {
-        camposTransferencia.style.display = 'block';
     }
 }
 
@@ -372,10 +368,9 @@ function guardarMetodoPago() {
         return;
     }
     
-    // Si es efectivo o transferencia, usar tipo como etiqueta
-    if (type === 'Efectivo' || type === 'Transferencia') {
+    if (type === 'efectivo') {
         const methods = getSavedPaymentMethods();
-        methods.push({ type, label: type });
+        methods.push({ type, label: 'Efectivo' });
         setSavedPaymentMethods(methods);
         renderSavedMethods();
         showToast('Método guardado');
@@ -400,7 +395,7 @@ function eliminarMetodoPago(index) {
     showToast('Método eliminado');
 }
 
-function confirmarPago() {
+async function confirmarPago() {
     const radios = document.getElementsByName('selectedPayment');
     let selectedIndex = -1;
     for (let r of radios) {
@@ -410,22 +405,56 @@ function confirmarPago() {
         }
     }
 
-    if (selectedIndex === -1) {
-        // Si no seleccionó método pero eligió Efectivo directo desde selector en formulario, permitir pagar en efectivo temporal
-        const tempType = document.getElementById('payment-type').value;
-        if (!tempType) {
-            showToast('Selecciona un método de pago');
-            return;
+    let metodo_pago = document.getElementById('payment-type').value;
+    let nombre_banco = null;
+
+    if (selectedIndex !== -1) {
+        const methods = getSavedPaymentMethods();
+        const selectedMethod = methods[selectedIndex];
+        metodo_pago = selectedMethod.type;
+        if (selectedMethod.type === 'Tarjeta') {
+            nombre_banco = selectedMethod.label;
         }
-        // Si llega aquí, asumimos que quiere pagar con el tipo seleccionado en el formulario
     }
 
-    // Aquí se podría enviar la orden y el método al backend. Por ahora simulamos éxito y limpiamos carrito.
-    showToast('Pago procesado. ¡Pedido confirmado!');
-    carrito = [];
-    renderCarrito();
-    toggleCarrito();
-    cerrarModalPago();
+    if (!metodo_pago) {
+        showToast('Selecciona un método de pago');
+        return;
+    }
+
+    const total = carrito.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
+
+    try {
+        const response = await fetch('api/checkout.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id_usuario: userId,
+                tipo_pedido: 'online',
+                tipo_venta: 'domicilio',
+                total_pedido: total,
+                metodo_pago: metodo_pago,
+                nombre_banco: nombre_banco
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('¡Pedido realizado con éxito!');
+            carrito = [];
+            renderCarrito();
+            toggleCarrito();
+            cerrarModalPago();
+        } else {
+            showToast('Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error en el checkout:', error);
+        showToast('Error de conexión al procesar el pedido.');
+    }
 }
 
 // Funciones de modales
@@ -533,8 +562,89 @@ function confirmarGuisos() {
 }
 
 function seleccionarBebida(nombre, precio, idProducto) {
-    showToast(`Seleccionaste ${nombre} - Función en desarrollo`);
-    // Aquí puedes implementar la lógica para bebidas similar a los guisos
+    abrirModalBebidas(nombre, precio, idProducto);
+}
+
+function abrirModalBebidas(nombre, precio, idProducto) {
+    console.log("abrirModalBebidas called with:", nombre, precio, idProducto);
+    productoSeleccionado = nombre;
+    precioSeleccionado = precio;
+    productoSeleccionadoId = idProducto;
+
+    const opcionesContainer = document.getElementById('opciones-bebidas');
+    opcionesContainer.innerHTML = ''; // Limpiar opciones anteriores
+
+    let sabores = [];
+    if (nombre.toLowerCase().includes('aguas')) {
+        sabores = ['Horchata', 'Jamaica', 'Pozol'];
+    } else if (nombre.toLowerCase().includes('refrescos')) {
+        sabores = ['Coca-Cola', 'Fresca', 'Sangria', 'Fanta de naranja', 'Fanta de fresa'];
+    }
+
+    sabores.forEach(sabor => {
+        const saborId = sabor.toLowerCase().replace(/\s/g, '-');
+        opcionesContainer.innerHTML += `
+            <div class="guiso-item">
+                <span>${sabor}</span>
+                <div class="cantidad-control">
+                    <button onclick="cambiarCantidadBebida('${saborId}', -1)">-</button>
+                    <input type="number" id="cantidad-${saborId}" value="0" min="0">
+                    <button onclick="cambiarCantidadBebida('${saborId}', 1)">+</button>
+                </div>
+            </div>
+        `;
+    });
+
+    const modal = document.getElementById('modalBebidas');
+    if (modal) {
+        document.getElementById('tituloBebidas').textContent = `Seleccionar - ${nombre}`;
+        modal.style.display = 'flex';
+    }
+}
+
+function cerrarModalBebidas() {
+    const modal = document.getElementById('modalBebidas');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function cambiarCantidadBebida(sabor, cambio) {
+    const input = document.getElementById(`cantidad-${sabor}`);
+    if (input) {
+        let valor = parseInt(input.value) + cambio;
+        if (valor < 0) valor = 0;
+        input.value = valor;
+    }
+}
+
+function confirmarBebidas() {
+    console.log("confirmarBebidas called");
+    const opcionesContainer = document.getElementById('opciones-bebidas');
+    const inputs = opcionesContainer.querySelectorAll('input[type="number"]');
+    let totalBebidas = 0;
+
+    inputs.forEach(input => {
+        const cantidad = parseInt(input.value) || 0;
+        if (cantidad > 0) {
+            const saborId = input.id.replace('cantidad-', '');
+            const saborNombre = saborId.charAt(0).toUpperCase() + saborId.slice(1).replace('-', ' ');
+            agregarAlCarritoBD({
+                id_producto: productoSeleccionadoId,
+                nombre: `${productoSeleccionado} (${saborNombre})`,
+                cantidad: cantidad,
+                precio: precioSeleccionado
+            });
+            totalBebidas += cantidad;
+        }
+    });
+
+    if (totalBebidas === 0) {
+        alert('Selecciona al menos una bebida para agregar al carrito.');
+        return;
+    }
+
+    cerrarModalBebidas();
 }
 
 function actualizarHeader() {
@@ -618,6 +728,59 @@ window.addEventListener('DOMContentLoaded', () => {
         modalGuisos.addEventListener('click', (e) => {
             if (e.target === modalGuisos) {
                 cerrarModalGuisos();
+            }
+        });
+    }
+
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredMenu = menuItems.filter(item => 
+                item.nombre.toLowerCase().includes(searchTerm) || 
+                (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm))
+            );
+            renderizarMenu(filteredMenu);
+        });
+    }
+
+    // Carousel logic
+    const track = document.querySelector('.carousel-track');
+    if (track) {
+        const slides = Array.from(track.children);
+        const nextButton = document.querySelector('.carousel-button.next');
+        const prevButton = document.querySelector('.carousel-button.prev');
+        const slideWidth = slides[0].getBoundingClientRect().width;
+
+        // Arrange the slides next to one another
+        const setSlidePosition = (slide, index) => {
+            slide.style.left = slideWidth * index + 'px';
+        };
+        slides.forEach(setSlidePosition);
+
+        const moveToSlide = (track, currentSlide, targetSlide) => {
+            track.style.transform = 'translateX(-' + targetSlide.style.left + ')';
+            currentSlide.classList.remove('current-slide');
+            targetSlide.classList.add('current-slide');
+        }
+
+        // When I click left, move slides to the left
+        prevButton.addEventListener('click', e => {
+            const currentSlide = track.querySelector('.current-slide') || slides[0];
+            const prevSlide = currentSlide.previousElementSibling;
+
+            if (prevSlide) {
+                moveToSlide(track, currentSlide, prevSlide);
+            }
+        });
+
+        // When I click right, move slides to the right
+        nextButton.addEventListener('click', e => {
+            const currentSlide = track.querySelector('.current-slide') || slides[0];
+            const nextSlide = currentSlide.nextElementSibling;
+
+            if (nextSlide) {
+                moveToSlide(track, currentSlide, nextSlide);
             }
         });
     }

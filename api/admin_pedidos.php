@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, PUT");
+header("Access-Control-Allow-Methods: GET, POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 include_once '../config/database.php';
@@ -29,24 +29,26 @@ switch ($method) {
         }
         break;
 
-    case 'PUT':
+    case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!empty($data->id_pedido) && !empty($data->estado)) {
-            try {
-                if ($pedido->updateEstado($data->id_pedido, $data->estado)) {
-                    echo json_encode(["success" => true, "message" => "Estado del pedido actualizado"]);
-                } else {
+        if (isset($data->_method) && $data->_method === 'PUT') {
+            if (!empty($data->id_pedido) && !empty($data->estado)) {
+                try {
+                    if ($pedido->updateEstado($data->id_pedido, $data->estado)) {
+                        echo json_encode(["success" => true, "message" => "Estado del pedido actualizado"]);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(["success" => false, "message" => "Error al actualizar el estado del pedido"]);
+                    }
+                } catch (Exception $e) {
                     http_response_code(500);
-                    echo json_encode(["success" => false, "message" => "Error al actualizar el estado del pedido"]);
+                    echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
                 }
-            } catch (Exception $e) {
-                http_response_code(500);
-                echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+            } else {
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "Datos incompletos"]);
             }
-        } else {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Datos incompletos"]);
         }
         break;
 

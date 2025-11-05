@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, DELETE");
+header("Access-Control-Allow-Methods: GET, POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 include_once '../config/database.php';
@@ -29,18 +29,20 @@ switch ($method) {
         ]);
         break;
 
-    case 'DELETE':
+    case 'POST':
         $data = json_decode(file_get_contents("php://input"));
         
-        if (!empty($data->id_resena)) {
-            $query = "DELETE FROM reseñas WHERE id_reseña = :id_resena";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(":id_resena", $data->id_resena);
-            
-            if ($stmt->execute()) {
-                echo json_encode(["success" => true, "message" => "Reseña eliminada"]);
-            } else {
-                echo json_encode(["success" => false, "message" => "Error al eliminar"]);
+        if (isset($data->_method) && $data->_method === 'DELETE') {
+            if (!empty($data->id_resena)) {
+                $query = "DELETE FROM reseñas WHERE id_reseña = :id_resena";
+                $stmt = $db->prepare($query);
+                $stmt->bindParam(":id_resena", $data->id_resena);
+                
+                if ($stmt->execute()) {
+                    echo json_encode(["success" => true, "message" => "Reseña eliminada"]);
+                } else {
+                    echo json_encode(["success" => false, "message" => "Error al eliminar"]);
+                }
             }
         }
         break;

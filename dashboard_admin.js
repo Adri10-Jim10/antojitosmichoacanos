@@ -451,11 +451,11 @@ async function updateOrderStatus() {
 
     try {
         const response = await fetch('api/admin_pedidos.php', {
-            method: 'PUT',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ id_pedido: orderId, estado: newStatus })
+            body: JSON.stringify({ id_pedido: orderId, estado: newStatus, _method: 'PUT' })
         });
 
         const data = await response.json();
@@ -509,11 +509,11 @@ function showConfirm(title, message, onConfirm) {
 function deleteUser(userId) {
     showConfirm('Eliminar Usuario', '¿Estás seguro de que quieres eliminar este usuario?', () => {
         fetch('api/admin_usuarios.php', {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ id_usuario: userId })
+            body: JSON.stringify({ id_usuario: userId, _method: 'DELETE' })
         })
         .then(response => response.json())
         .then(data => {
@@ -538,11 +538,11 @@ function viewReview(reviewId) {
 function deleteReview(reviewId) {
     showConfirm('Eliminar Reseña', '¿Estás seguro de que quieres eliminar esta reseña?', () => {
         fetch('api/admin_resenas.php', {
-            method: 'DELETE',
+            method: 'POST', 
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ id_resena: reviewId })
+            body: JSON.stringify({ id_resena: reviewId, _method: 'DELETE' })
         })
         .then(response => response.json())
         .then(data => {

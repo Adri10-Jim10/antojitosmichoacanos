@@ -210,14 +210,15 @@ async function eliminarItemBD(index) {
     
     try {
         const response = await fetch('api/carrito.php', {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 id_usuario: userId,
                 id_item: item.id,
-                tipo: item.tipo
+                tipo: item.tipo,
+                _method: 'DELETE'
             })
         });
 

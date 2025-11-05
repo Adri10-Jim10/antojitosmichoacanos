@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, DELETE");
+header("Access-Control-Allow-Methods: GET, POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 include_once '../config/database.php';
@@ -26,32 +26,32 @@ switch ($method) {
         break;
 
     case 'POST':
-        if (!empty($data->id_usuario) && !empty($data->id_producto) && !empty($data->cantidad) && !empty($data->precio)) {
-            $carrito->obtenerCarrito($data->id_usuario);
-            if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio)) {
-                echo json_encode(["success" => true, "message" => "Producto agregado al carrito"]);
+        if (isset($data->_method) && $data->_method === 'DELETE') {
+            if (!empty($data->id_usuario) && !empty($data->id_item) && !empty($data->tipo)) {
+                $carrito->obtenerCarrito($data->id_usuario);
+                if ($carrito->eliminarItem($data->id_item, $data->tipo)) {
+                    echo json_encode(["success" => true, "message" => "Item eliminado del carrito"]);
+                } else {
+                    http_response_code(500);
+                    echo json_encode(["success" => false, "message" => "Error al eliminar item"]);
+                }
             } else {
-                http_response_code(500);
-                echo json_encode(["success" => false, "message" => "Error al agregar producto"]);
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "Datos incompletos"]);
             }
         } else {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Datos incompletos"]);
-        }
-        break;
-
-    case 'DELETE':
-        if (!empty($data->id_usuario) && !empty($data->id_item) && !empty($data->tipo)) {
-            $carrito->obtenerCarrito($data->id_usuario);
-            if ($carrito->eliminarItem($data->id_item, $data->tipo)) {
-                echo json_encode(["success" => true, "message" => "Item eliminado del carrito"]);
+            if (!empty($data->id_usuario) && !empty($data->id_producto) && !empty($data->cantidad) && !empty($data->precio)) {
+                $carrito->obtenerCarrito($data->id_usuario);
+                if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio)) {
+                    echo json_encode(["success" => true, "message" => "Producto agregado al carrito"]);
+                } else {
+                    http_response_code(500);
+                    echo json_encode(["success" => false, "message" => "Error al agregar producto"]);
+                }
             } else {
-                http_response_code(500);
-                echo json_encode(["success" => false, "message" => "Error al eliminar item"]);
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "Datos incompletos"]);
             }
-        } else {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Datos incompletos"]);
         }
         break;
 }

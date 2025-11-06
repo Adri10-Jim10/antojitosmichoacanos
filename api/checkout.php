@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST");
@@ -14,6 +16,7 @@ $carrito = new Carrito($db);
 $pagos = new Pagos($db);
 
 $data = json_decode(file_get_contents("php://input"));
+error_log("Checkout API: " . print_r($data, true));
 
 if (
     !empty($data->id_usuario) &&

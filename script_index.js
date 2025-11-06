@@ -762,38 +762,76 @@ window.addEventListener('DOMContentLoaded', () => {
         const slides = Array.from(track.children);
         const nextButton = document.querySelector('.carousel-button.next');
         const prevButton = document.querySelector('.carousel-button.prev');
-        const slideWidth = slides[0].getBoundingClientRect().width;
+
+        // Establecer la primera diapositiva como actual
+        slides[0].classList.add('current-slide');
 
         // Arrange the slides next to one another
-        const setSlidePosition = (slide, index) => {
-            slide.style.left = slideWidth * index + 'px';
-        };
-        slides.forEach(setSlidePosition);
+        slides.forEach((slide, index) => {
+            slide.style.left = `${index * 100}%`;
+        });
 
         const moveToSlide = (track, currentSlide, targetSlide) => {
-            track.style.transform = 'translateX(-' + targetSlide.style.left + ')';
+            const targetLeft = targetSlide.style.left;
+            track.style.transform = `translateX(-${targetLeft})`;
             currentSlide.classList.remove('current-slide');
             targetSlide.classList.add('current-slide');
         }
 
+        let currentIndex = 0;
+        const totalSlides = slides.length;
+
+        const startAutoRotation = () => {
+            return setInterval(() => {
+                const currentSlide = slides[currentIndex];
+                currentIndex = (currentIndex + 1) % totalSlides;
+                const nextSlide = slides[currentIndex];
+                moveToSlide(track, currentSlide, nextSlide);
+            }, 3000);
+        };
+
+        // Iniciar la rotación automática
+        let autoRotateInterval = startAutoRotation();
+
+        // Pausar la rotación automática cuando el mouse está sobre el carrusel
+        track.parentElement.addEventListener('mouseenter', () => {
+            if (autoRotateInterval) {
+                clearInterval(autoRotateInterval);
+                autoRotateInterval = null;
+            }
+        });
+
+        // Reanudar la rotación automática cuando el mouse sale del carrusel
+        track.parentElement.addEventListener('mouseleave', () => {
+            if (!autoRotateInterval) {
+                autoRotateInterval = startAutoRotation();
+            }
+        });
+
+        // Reiniciar el temporizador cuando se hace clic en los botones
+        const resetTimer = () => {
+            if (autoRotateInterval) {
+                clearInterval(autoRotateInterval);
+                autoRotateInterval = startAutoRotation();
+            }
+        };
+
         // When I click left, move slides to the left
         prevButton.addEventListener('click', e => {
-            const currentSlide = track.querySelector('.current-slide') || slides[0];
-            const prevSlide = currentSlide.previousElementSibling;
-
-            if (prevSlide) {
-                moveToSlide(track, currentSlide, prevSlide);
-            }
+            const currentSlide = slides[currentIndex];
+            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            const prevSlide = slides[currentIndex];
+            moveToSlide(track, currentSlide, prevSlide);
+            resetTimer(); // Reiniciar el temporizador después de la navegación manual
         });
 
         // When I click right, move slides to the right
         nextButton.addEventListener('click', e => {
-            const currentSlide = track.querySelector('.current-slide') || slides[0];
-            const nextSlide = currentSlide.nextElementSibling;
-
-            if (nextSlide) {
-                moveToSlide(track, currentSlide, nextSlide);
-            }
+            const currentSlide = slides[currentIndex];
+            currentIndex = (currentIndex + 1) % totalSlides;
+            const nextSlide = slides[currentIndex];
+            moveToSlide(track, currentSlide, nextSlide);
+            resetTimer(); // Reiniciar el temporizador después de la navegación manual
         });
     }
 });

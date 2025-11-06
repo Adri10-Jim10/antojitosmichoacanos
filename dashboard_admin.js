@@ -431,9 +431,69 @@ function showToast(message, isError = false) {
 }
 
 // Funciones de acciones
-function viewOrder(orderId) {
-    showToast(`Ver pedido #${orderId} - En desarrollo`);
-    // Implementar modal de detalles del pedido
+async function viewOrder(orderId) {
+    const modal = document.getElementById('viewOrderModal');
+    const detailsContainer = document.getElementById('viewOrderDetails');
+    
+    modal.style.display = 'block';
+    detailsContainer.innerHTML = '<p>Cargando detalles...</p>';
+
+    try {
+        const response = await fetch(`api/admin_pedidos.php?id_pedido=${orderId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            renderOrderDetails(data.data);
+        } else {
+            detailsContainer.innerHTML = `<p>Error: ${data.message}</p>`;
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        detailsContainer.innerHTML = '<p>Error de conexión al cargar los detalles del pedido.</p>';
+        showToast('Error de conexión al cargar detalles', true);
+    }
+}
+
+function closeViewOrderModal() {
+    const modal = document.getElementById('viewOrderModal');
+    modal.style.display = 'none';
+}
+
+function renderOrderDetails(order) {
+    const detailsContainer = document.getElementById('viewOrderDetails');
+    if (!order || !order.detalles) {
+        detailsContainer.innerHTML = '<p>No se encontraron detalles para este pedido.</p>';
+        return;
+    }
+
+    let itemsHtml = `
+        <div class="order-items-table">
+            <h4>Productos del Pedido</h4>
+            <table>
+                <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th></tr></thead>
+                <tbody>
+    `;
+    order.detalles.forEach(item => {
+        itemsHtml += `
+            <tr>
+                <td>${item.nombre_producto}</td>
+                <td>${item.cantidad}</td>
+                <td>$${parseFloat(item.precio_unitario).toFixed(2)}</td>
+                <td>$${(item.cantidad * item.precio_unitario).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    itemsHtml += '</tbody></table></div>';
+
+    detailsContainer.innerHTML = `
+        <p><strong>ID Pedido:</strong> #${order.id_pedido}</p>
+        <p><strong>Cliente:</strong> ${order.cliente_nombre}</p>
+        <p><strong>Fecha:</strong> ${new Date(order.fecha_pedido).toLocaleString()}</p>
+        <p><strong>Estado:</strong> <span class="badge ${order.estado}">${order.estado}</span></p>
+        <p><strong>Total:</strong> $${parseFloat(order.total_pedido).toFixed(2)}</p>
+        ${itemsHtml}
+    `;
 }
 
 function editOrder(orderId) {

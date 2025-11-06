@@ -68,5 +68,36 @@ class Pedido {
         $stmt->execute();
         return $stmt;
     }
+
+    // Obtener un pedido por su ID con detalles
+    public function getPedidoById($id_pedido) {
+        // Obtener información general del pedido
+        $query_pedido = "SELECT p.*, u.usuario as cliente_nombre 
+                         FROM " . $this->table_name . " p
+                         JOIN usuarios u ON p.id_usuario = u.id_usuario
+                         WHERE p.id_pedido = :id_pedido";
+        
+        $stmt_pedido = $this->conn->prepare($query_pedido);
+        $stmt_pedido->bindParam(":id_pedido", $id_pedido);
+        $stmt_pedido->execute();
+        $pedido_data = $stmt_pedido->fetch(PDO::FETCH_ASSOC);
+
+        if (!$pedido_data) {
+            return null;
+        }
+
+        // Obtener detalles (items) del pedido
+        $query_detalles = "SELECT dp.*, pr.nombre as nombre_producto 
+                           FROM detalle_pedidos_normales dp
+                           JOIN productos pr ON dp.id_producto = pr.id_producto
+                           WHERE dp.id_pedido = :id_pedido";
+        
+        $stmt_detalles = $this->conn->prepare($query_detalles);
+        $stmt_detalles->bindParam(":id_pedido", $id_pedido);
+        $stmt_detalles->execute();
+        $pedido_data['detalles'] = $stmt_detalles->fetchAll(PDO::FETCH_ASSOC);
+
+        return $pedido_data;
+    }
 }
 ?>

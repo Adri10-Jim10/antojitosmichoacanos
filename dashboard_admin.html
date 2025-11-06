@@ -148,6 +148,106 @@
                         <button onclick="updateOrderStatus()" class="btn btn-primary">Actualizar Estado</button>
                     </div>
                 </div>
+
+                <!-- Modal para Ver Pedido -->
+    <div id="viewOrderModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeViewOrderModal()">&times;</span>
+            <h2>Detalles del Pedido</h2>
+            <div id="viewOrderContent">
+                <!-- El contenido se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Usuario -->
+    <div id="editUserModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditUserModal()">&times;</span>
+            <h2>Editar Usuario</h2>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label for="editUserName">Usuario:</label>
+                    <input type="text" id="editUserName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editUserEmail">Email:</label>
+                    <input type="email" id="editUserEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="editUserRole">Rol:</label>
+                    <select id="editUserRole">
+                        <option value="cliente">Cliente</option>
+                        <option value="administrador">Administrador</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Actualizar Usuario</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Ver Reseña -->
+    <div id="viewReviewModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeViewReviewModal()">&times;</span>
+            <h2>Detalles de la Reseña</h2>
+            <div id="viewReviewContent">
+                <!-- El contenido se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Producto -->
+    <div id="editProductModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditProductModal()">&times;</span>
+            <h2>Editar Producto</h2>
+            <form id="editProductForm">
+                <input type="hidden" id="editProductId">
+                <div class="form-group">
+                    <label for="editProductName">Nombre:</label>
+                    <input type="text" id="editProductName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductDescription">Descripción:</label>
+                    <textarea id="editProductDescription"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editProductPrice">Precio:</label>
+                    <input type="number" id="editProductPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductCategory">Categoría:</label>
+                    <select id="editProductCategory" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="editProductStatus">Estado:</label>
+                    <select id="editProductStatus">
+                        <option value="1">Activo</option>
+                        <option value="0">Inactivo</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Actualizar Producto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Stock -->
+    <div id="editStockModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeEditStockModal()">&times;</span>
+            <h2>Editar Stock</h2>
+            <form id="editStockForm">
+                <input type="hidden" id="editStockId">
+                <div class="form-group">
+                    <label for="editStockQuantity">Cantidad en Stock:</label>
+                    <input type="number" id="editStockQuantity" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Actualizar Stock</button>
+            </form>
+        </div>
+    </div>
             
                 <!-- Modal de Confirmación -->
                 <div id="confirmModal" class="modal" style="display: none;">

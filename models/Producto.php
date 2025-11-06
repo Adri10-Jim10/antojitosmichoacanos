@@ -40,5 +40,33 @@ class Producto {
         $stmt->execute();
         return $stmt;
     }
+
+    public function getProductById($id_producto) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE id_producto = :id_producto";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_producto", $id_producto);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updateProduct($id_producto, $nombre, $descripcion, $precio, $id_categoria, $activo) {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET nombre = :nombre, 
+                      descripcion = :descripcion, 
+                      precio = :precio, 
+                      id_categoria = :id_categoria, 
+                      activo = :activo
+                  WHERE id_producto = :id_producto";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_producto", $id_producto);
+        $stmt->bindParam(":nombre", $nombre);
+        $stmt->bindParam(":descripcion", $descripcion);
+        $stmt->bindParam(":precio", $precio);
+        $stmt->bindParam(":id_categoria", $id_categoria);
+        $stmt->bindParam(":activo", $activo);
+        
+        return $stmt->execute();
+    }
 }
 ?>

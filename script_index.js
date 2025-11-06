@@ -8,6 +8,7 @@ let menuItems = [];
 let productoSeleccionado = '';
 let precioSeleccionado = 0;
 let productoSeleccionadoId = 0;
+let tipoPedidoSeleccionado = 'local';
 
 // Cargar menú desde la API al iniciar
 async function cargarMenu() {
@@ -46,6 +47,10 @@ function renderizarMenu(productos) {
         <h3>${producto.nombre}</h3>
         <p class="description">${producto.descripcion || 'Delicioso producto'}</p>
         <p class="price">$${producto.precio}</p>
+        <div class="tipo-pedido-selector">
+            <label><input type="radio" name="tipo_pedido_${producto.id_producto}" value="local" checked> Local</label>
+            <label><input type="radio" name="tipo_pedido_${producto.id_producto}" value="llevar"> Llevar</label>
+        </div>
         ${botonHTML}
 `;
         
@@ -185,7 +190,8 @@ async function agregarAlCarritoBD(producto) {
                 id_usuario: userId,
                 id_producto: producto.id_producto,
                 cantidad: producto.cantidad,
-                precio: producto.precio
+                precio: producto.precio,
+                tipo_pedido: tipoPedidoSeleccionado
             })
         });
 
@@ -490,6 +496,10 @@ function abrirModalGuisos(nombre, precio, idProducto) {
     productoSeleccionado = nombre;
     precioSeleccionado = precio;
     productoSeleccionadoId = idProducto;
+    const tipoPedidoInput = document.querySelector(`input[name="tipo_pedido_${idProducto}"]:checked`);
+    if (tipoPedidoInput) {
+        tipoPedidoSeleccionado = tipoPedidoInput.value;
+    }
     
     // Resetear cantidades
     document.getElementById('cantidad-pastor').value = 0;
@@ -563,6 +573,10 @@ function confirmarGuisos() {
 }
 
 function seleccionarBebida(nombre, precio, idProducto) {
+    const tipoPedidoInput = document.querySelector(`input[name="tipo_pedido_${idProducto}"]:checked`);
+    if (tipoPedidoInput) {
+        tipoPedidoSeleccionado = tipoPedidoInput.value;
+    }
     abrirModalBebidas(nombre, precio, idProducto);
 }
 

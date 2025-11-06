@@ -93,5 +93,30 @@ class Usuario {
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function getUserById($id_usuario) {
+        $query = "SELECT id_usuario, usuario, correo, rol 
+                  FROM " . $this->table_name . " 
+                  WHERE id_usuario = :id_usuario";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_usuario", $id_usuario);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updateUser($id_usuario, $usuario, $correo, $rol) {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET usuario = :usuario, correo = :correo, rol = :rol
+                  WHERE id_usuario = :id_usuario";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_usuario", $id_usuario);
+        $stmt->bindParam(":usuario", $usuario);
+        $stmt->bindParam(":correo", $correo);
+        $stmt->bindParam(":rol", $rol);
+        
+        return $stmt->execute();
+    }
 }
 ?>

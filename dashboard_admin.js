@@ -6,6 +6,119 @@ let charts = {};
 document.addEventListener('DOMContentLoaded', function() {
     checkAdminAuth();
     loadDashboardData();
+
+    document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('editUserId').value;
+        const userName = document.getElementById('editUserName').value;
+        const userEmail = document.getElementById('editUserEmail').value;
+        const userRole = document.getElementById('editUserRole').value;
+
+        try {
+            const response = await fetch('api/admin_usuarios.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    id_usuario: userId, 
+                    usuario: userName, 
+                    correo: userEmail, 
+                    rol: userRole, 
+                    _method: 'PUT' 
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeEditUserModal();
+                loadSectionData('usuarios');
+                showToast('Usuario actualizado correctamente');
+            } else {
+                showToast('Error: ' + data.message, true);
+            }
+        } catch (error) {
+            console.error('Error actualizando usuario:', error);
+            showToast('Error de conexión al actualizar usuario', true);
+        }
+    });
+
+    document.getElementById('editProductForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const productId = document.getElementById('editProductId').value;
+        const productName = document.getElementById('editProductName').value;
+        const productDescription = document.getElementById('editProductDescription').value;
+        const productPrice = document.getElementById('editProductPrice').value;
+        const productCategory = document.getElementById('editProductCategory').value;
+        const productStatus = document.getElementById('editProductStatus').value;
+
+        try {
+            const response = await fetch('api/admin_productos.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    id_producto: productId, 
+                    nombre: productName, 
+                    descripcion: productDescription, 
+                    precio: productPrice, 
+                    id_categoria: productCategory, 
+                    activo: productStatus, 
+                    _method: 'PUT' 
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeEditProductModal();
+                loadSectionData('productos');
+                showToast('Producto actualizado correctamente');
+            } else {
+                showToast('Error: ' + data.message, true);
+            }
+        } catch (error) {
+            console.error('Error actualizando producto:', error);
+            showToast('Error de conexión al actualizar producto', true);
+        }
+    });
+
+    document.getElementById('editStockForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const stockId = document.getElementById('editStockId').value;
+        const stockQuantity = document.getElementById('editStockQuantity').value;
+
+        try {
+            const response = await fetch('api/admin_inventario.php', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    id_almacen: stockId, 
+                    stock: stockQuantity
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeEditStockModal();
+                loadSectionData('inventario');
+                showToast('Stock actualizado correctamente');
+            } else {
+                showToast('Error: ' + data.message, true);
+            }
+        } catch (error) {
+            console.error('Error actualizando stock:', error);
+            showToast('Error de conexión al actualizar stock', true);
+        }
+    });
 });
 
 // Verificar autenticación de administrador
@@ -396,7 +509,48 @@ function renderSectionTable(sectionName, data) {
                     <td>$${parseFloat(item.precio).toFixed(2)}</td>
                     <td>${item.stock <= item.stock_minimo ? '<span class="badge alerta">Bajo</span>' : '<span class="badge ok">OK</span>'}</td>
                     <td>
-                        <button class="btn btn-editar" onclick="editarStock(${item.id_almacen}, ${item.stock})">Editar</button>
+function editarStock(inventoryId, currentStock) {
+    document.getElementById('editStockId').value = inventoryId;
+    document.getElementById('editStockQuantity').value = currentStock;
+    document.getElementById('editStockModal').style.display = 'block';
+}
+
+function closeEditStockModal() {
+    document.getElementById('editStockModal').style.display = 'none';
+}
+
+document.getElementById('editStockForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const stockId = document.getElementById('editStockId').value;
+    const stockQuantity = document.getElementById('editStockQuantity').value;
+
+    try {
+        const response = await fetch('api/admin_inventario.php', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                id_almacen: stockId, 
+                stock: stockQuantity
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeEditStockModal();
+            loadSectionData('inventario');
+            showToast('Stock actualizado correctamente');
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error actualizando stock:', error);
+        showToast('Error de conexión al actualizar stock', true);
+    }
+});
                     </td>
                 `;
                 break;
@@ -429,9 +583,46 @@ function showToast(message, isError = false) {
 }
 
 // Funciones de acciones
-function viewOrder(orderId) {
-    showToast(`Ver pedido #${orderId} - En desarrollo`);
-    // Implementar modal de detalles del pedido
+async function viewOrder(orderId) {
+    try {
+        const response = await fetch(`api/admin_pedidos.php?id=${orderId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const order = data.data;
+            const modalContent = document.getElementById('viewOrderContent');
+            
+            let productosHtml = '<h4>Productos:</h4><table><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Subtotal</th></tr></thead><tbody>';
+            let total = 0;
+            order.productos.forEach(p => {
+                const subtotal = p.cantidad * p.precio_unitario;
+                productosHtml += `<tr><td>${p.nombre}</td><td>${p.cantidad}</td><td>$${parseFloat(p.precio_unitario).toFixed(2)}</td><td>$${subtotal.toFixed(2)}</td></tr>`;
+                total += subtotal;
+            });
+            productosHtml += `</tbody></table><p><strong>Total del Pedido: $${parseFloat(order.total_pedido).toFixed(2)}</strong></p>`;
+
+            modalContent.innerHTML = `
+                <p><strong>ID Pedido:</strong> #${order.id_pedido}</p>
+                <p><strong>Cliente:</strong> ${order.cliente_nombre}</p>
+                <p><strong>Email:</strong> ${order.cliente_correo}</p>
+                <p><strong>Fecha:</strong> ${new Date(order.fecha_pedido).toLocaleString()}</p>
+                <p><strong>Estado:</strong> <span class="badge ${order.estado}">${order.estado}</span></p>
+                <p><strong>Tipo de Pedido:</strong> ${order.tipo_pedido}</p>
+                ${productosHtml}
+            `;
+
+            document.getElementById('viewOrderModal').style.display = 'block';
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error viendo el pedido:', error);
+        showToast('Error de conexión al ver el pedido', true);
+    }
+}
+
+function closeViewOrderModal() {
+    document.getElementById('viewOrderModal').style.display = 'none';
 }
 
 function editOrder(orderId) {
@@ -474,10 +665,68 @@ async function updateOrderStatus() {
     }
 }
 
-function editUser(userId) {
-    showToast(`Editar usuario #${userId} - En desarrollo`);
-    // Implementar edición de usuario
+async function editUser(userId) {
+    try {
+        const response = await fetch(`api/admin_usuarios.php?id=${userId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const user = data.data;
+            document.getElementById('editUserId').value = user.id_usuario;
+            document.getElementById('editUserName').value = user.usuario;
+            document.getElementById('editUserEmail').value = user.correo;
+            document.getElementById('editUserRole').value = user.rol;
+            document.getElementById('editUserModal').style.display = 'block';
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error editando usuario:', error);
+        showToast('Error de conexión al editar usuario', true);
+    }
 }
+
+function closeEditUserModal() {
+    document.getElementById('editUserModal').style.display = 'none';
+}
+
+document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('editUserId').value;
+    const userName = document.getElementById('editUserName').value;
+    const userEmail = document.getElementById('editUserEmail').value;
+    const userRole = document.getElementById('editUserRole').value;
+
+    try {
+        const response = await fetch('api/admin_usuarios.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                id_usuario: userId, 
+                usuario: userName, 
+                correo: userEmail, 
+                rol: userRole, 
+                _method: 'PUT' 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeEditUserModal();
+            loadSectionData('usuarios');
+            showToast('Usuario actualizado correctamente');
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error actualizando usuario:', error);
+        showToast('Error de conexión al actualizar usuario', true);
+    }
+});
 
 function showConfirm(title, message, onConfirm) {
     const modal = document.getElementById('confirmModal');
@@ -531,8 +780,35 @@ function deleteUser(userId) {
     });
 }
 
-function viewReview(reviewId) {
-    showToast(`Ver reseña #${reviewId} - En desarrollo`);
+async function viewReview(reviewId) {
+    try {
+        const response = await fetch(`api/admin_resenas.php?id=${reviewId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const review = data.data;
+            const modalContent = document.getElementById('viewReviewContent');
+            
+            modalContent.innerHTML = `
+                <p><strong>ID Reseña:</strong> #${review.id_reseña}</p>
+                <p><strong>Cliente:</strong> ${review.cliente}</p>
+                <p><strong>Calificación:</strong> ${ '⭐'.repeat(review.calificacion)}</p>
+                <p><strong>Comentario:</strong> ${review.comentario}</p>
+                <p><strong>Fecha:</strong> ${new Date(review.fecha_reseña).toLocaleString()}</p>
+            `;
+
+            document.getElementById('viewReviewModal').style.display = 'block';
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error viendo la reseña:', error);
+        showToast('Error de conexión al ver la reseña', true);
+    }
+}
+
+function closeViewReviewModal() {
+    document.getElementById('viewReviewModal').style.display = 'none';
 }
 
 function deleteReview(reviewId) {
@@ -559,6 +835,94 @@ function deleteReview(reviewId) {
         });
     });
 }
+
+async function editProduct(productId) {
+    try {
+        const [productRes, categoriesRes] = await Promise.all([
+            fetch(`api/admin_productos.php?id=${productId}`),
+            fetch('api/admin_categorias.php') // Assuming you have a categories API
+        ]);
+
+        const productData = await productRes.json();
+        const categoriesData = await categoriesRes.json();
+
+        if (productData.success && categoriesData.success) {
+            const product = productData.data;
+            const categories = categoriesData.data;
+
+            document.getElementById('editProductId').value = product.id_producto;
+            document.getElementById('editProductName').value = product.nombre;
+            document.getElementById('editProductDescription').value = product.descripcion;
+            document.getElementById('editProductPrice').value = product.precio;
+            document.getElementById('editProductStatus').value = product.activo;
+
+            const categorySelect = document.getElementById('editProductCategory');
+            categorySelect.innerHTML = '';
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id_categoria;
+                option.textContent = category.nombre;
+                if (category.id_categoria == product.id_categoria) {
+                    option.selected = true;
+                }
+                categorySelect.appendChild(option);
+            });
+
+            document.getElementById('editProductModal').style.display = 'block';
+        } else {
+            showToast('Error: ' + (productData.message || categoriesData.message), true);
+        }
+    } catch (error) {
+        console.error('Error editando producto:', error);
+        showToast('Error de conexión al editar producto', true);
+    }
+}
+
+function closeEditProductModal() {
+    document.getElementById('editProductModal').style.display = 'none';
+}
+
+document.getElementById('editProductForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const productId = document.getElementById('editProductId').value;
+    const productName = document.getElementById('editProductName').value;
+    const productDescription = document.getElementById('editProductDescription').value;
+    const productPrice = document.getElementById('editProductPrice').value;
+    const productCategory = document.getElementById('editProductCategory').value;
+    const productStatus = document.getElementById('editProductStatus').value;
+
+    try {
+        const response = await fetch('api/admin_productos.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                id_producto: productId, 
+                nombre: productName, 
+                descripcion: productDescription, 
+                precio: productPrice, 
+                id_categoria: productCategory, 
+                activo: productStatus, 
+                _method: 'PUT' 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeEditProductModal();
+            loadSectionData('productos');
+            showToast('Producto actualizado correctamente');
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error actualizando producto:', error);
+        showToast('Error de conexión al actualizar producto', true);
+    }
+});
 
 // Cerrar sesión
 function logout() {

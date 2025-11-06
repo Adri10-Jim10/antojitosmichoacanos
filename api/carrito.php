@@ -40,9 +40,9 @@ switch ($method) {
                 echo json_encode(["success" => false, "message" => "Datos incompletos"]);
             }
         } else {
-            if (!empty($data->id_usuario) && !empty($data->id_producto) && !empty($data->cantidad) && !empty($data->precio)) {
+            if (!empty($data->id_usuario) && !empty($data->id_producto) && !empty($data->cantidad) && !empty($data->precio) && !empty($data->tipo_pedido)) {
                 $carrito->obtenerCarrito($data->id_usuario);
-                if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio)) {
+                if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio, $data->tipo_pedido)) {
                     echo json_encode(["success" => true, "message" => "Producto agregado al carrito"]);
                 } else {
                     http_response_code(500);

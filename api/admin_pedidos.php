@@ -15,17 +15,39 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        try {
-            $stmt = $pedido->getAllPedidos();
-            $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (isset($_GET['id'])) {
+            $id_pedido = filter_var($_GET['id'], FILTER_VALIDATE_INT);
+            if ($id_pedido === false) {
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "ID de pedido inválido"]);
+                exit;
+            }
 
-            echo json_encode([
-                "success" => true,
-                "data" => $pedidos
-            ]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+            try {
+                $pedido_detalle = $pedido->getPedidoById($id_pedido);
+                if ($pedido_detalle) {
+                    echo json_encode(["success" => true, "data" => $pedido_detalle]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(["success" => false, "message" => "Pedido no encontrado"]);
+                }
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+            }
+        } else {
+            try {
+                $stmt = $pedido->getAllPedidos();
+                $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                echo json_encode([
+                    "success" => true,
+                    "data" => $pedidos
+                ]);
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(["success" => false, "message" => "Error: " . $e->getMessage()]);
+            }
         }
         break;
 

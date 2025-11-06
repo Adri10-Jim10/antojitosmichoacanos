@@ -97,10 +97,10 @@ class Carrito {
         return $items;
     }
 
-    public function agregarProducto($id_producto, $cantidad, $precio) {
+    public function agregarProducto($id_producto, $cantidad, $precio, $tipo_pedido) {
         $query = "INSERT INTO " . $this->table_items . " 
-                 (id_carrito, id_producto, cantidad, precio_unitario) 
-                 VALUES (:id_carrito, :id_producto, :cantidad, :precio)
+                 (id_carrito, id_producto, cantidad, precio_unitario, tipo_pedido) 
+                 VALUES (:id_carrito, :id_producto, :cantidad, :precio, :tipo_pedido)
                  ON DUPLICATE KEY UPDATE cantidad = cantidad + :cantidad";
         
         $stmt = $this->conn->prepare($query);
@@ -108,6 +108,7 @@ class Carrito {
         $stmt->bindParam(":id_producto", $id_producto);
         $stmt->bindParam(":cantidad", $cantidad);
         $stmt->bindParam(":precio", $precio);
+        $stmt->bindParam(":tipo_pedido", $tipo_pedido);
         
         return $stmt->execute();
     }

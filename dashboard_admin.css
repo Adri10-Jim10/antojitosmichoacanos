@@ -201,6 +201,21 @@ tr:hover {
 .btn-eliminar { background: #e74c3c; color: white; }
 .btn-ver { background: #2ecc71; color: white; }
 
+/* Botón específico para actualizar pagos (azul) */
+.btn-actualizar {
+    background-color: #3498db;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-actualizar:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
 /* Charts */
 .charts-grid {
     display: grid;

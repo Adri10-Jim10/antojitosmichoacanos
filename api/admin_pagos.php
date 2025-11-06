@@ -31,9 +31,25 @@ switch ($method) {
         break;
 
     case 'POST':
-        // Registrar un nuevo pago (opcional)
+        // Leer cuerpo JSON
         $data = json_decode(file_get_contents("php://input"));
 
+        // Si se envía _method = 'PUT', tratamos como actualización
+        if (!empty($data->_method) && strtoupper($data->_method) === 'PUT') {
+            if (!empty($data->id_pago) && !empty($data->estado)) {
+                $ok = $pagos->actualizarEstado($data->id_pago, $data->estado);
+                if ($ok) {
+                    echo json_encode(["success" => true, "message" => "Estado del pago actualizado"]);
+                } else {
+                    echo json_encode(["success" => false, "message" => "Error al actualizar el estado del pago"]);
+                }
+            } else {
+                echo json_encode(["success" => false, "message" => "Datos incompletos para actualizar"]);
+            }
+            break;
+        }
+
+        // Registrar un nuevo pago (opcional)
         if (!empty($data->id_pedido) && !empty($data->id_usuario) && !empty($data->metodo_pago) && !empty($data->monto_total)) {
             $nuevoPago = [
                 "id_pedido" => $data->id_pedido,
@@ -53,6 +69,21 @@ switch ($method) {
             }
         } else {
             echo json_encode(["success" => false, "message" => "Datos incompletos"]);
+        }
+        break;
+
+    case 'PUT':
+        // Alternativa: manejar directamente método PUT
+        $data = json_decode(file_get_contents("php://input"));
+        if (!empty($data->id_pago) && !empty($data->estado)) {
+            $ok = $pagos->actualizarEstado($data->id_pago, $data->estado);
+            if ($ok) {
+                echo json_encode(["success" => true, "message" => "Estado del pago actualizado"]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Error al actualizar el estado del pago"]);
+            }
+        } else {
+            echo json_encode(["success" => false, "message" => "Datos incompletos para actualizar"]);
         }
         break;
 

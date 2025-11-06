@@ -49,5 +49,14 @@ class Pagos {
         }
         return false;
     }
+
+    // Nuevo: actualizar el estado de un pago
+    public function actualizarEstado($id_pago, $estado) {
+        $query = "UPDATE " . $this->table_name . " SET estado = :estado WHERE id_pago = :id_pago";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->bindParam(':id_pago', $id_pago);
+        return $stmt->execute();
+    }
 }
 ?>

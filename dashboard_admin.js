@@ -345,6 +345,7 @@ function renderSectionTable(sectionName, data) {
                 break;
             case 'pagos':
                 const fechaPago = item.fecha_pago ? new Date(item.fecha_pago).toLocaleDateString() : 'N/A';
+                const isPendiente = (item.estado || '').toString().toLowerCase() === 'pendiente';
                 html += `
                     <td>${item.id_pago || 'N/A'}</td>
                     <td>#${item.id_pedido || 'N/A'}</td>
@@ -353,6 +354,9 @@ function renderSectionTable(sectionName, data) {
                     <td>$${parseFloat(item.monto_total || 0).toFixed(2)}</td>
                     <td><span class="badge ${item.estado || 'pendiente'}">${item.estado || 'pendiente'}</span></td>
                     <td>${fechaPago}</td>
+                    <td>
+                        ${isPendiente ? `<button class="btn btn-actualizar" onclick="marcarPagoCompletado(${item.id_pago})">Actualizar</button>` : ''}
+                    </td>
                 `;
                 break;
             case 'resenas':
@@ -562,3 +566,30 @@ setInterval(() => {
         loadDashboardData();
     }
 }, 30000);
+
+// Nuevo: marcar pago como completado
+async function marcarPagoCompletado(idPago) {
+    if (!confirm(`Marcar pago #${idPago} como COMPLETADO?`)) return;
+
+    try {
+        const response = await fetch('api/admin_pagos.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id_pago: idPago, estado: 'completado', _method: 'PUT' })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Pago actualizado a completado');
+            loadSectionData('pagos'); // recargar tabla de pagos
+            loadDashboardData(); // actualizar estadísticas si aplica
+        } else {
+            showToast('Error: ' + data.message, true);
+        }
+    } catch (error) {
+        console.error('Error actualizando pago:', error);
+        showToast('Error de conexión al actualizar pago', true);
+    }
+}

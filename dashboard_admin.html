@@ -159,6 +159,23 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Modal para Editar Stock de Inventario -->
+                <div id="editStockModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <span class="close-button" onclick="closeEditStockModal()">&times;</span>
+                        <h2>Editar Stock</h2>
+                        <p><strong>ID Almacén:</strong> <span id="editStockId"></span></p>
+                        <div class="form-group">
+                            <label for="editStockInput">Stock:</label>
+                            <input type="number" id="editStockInput" min="0" step="1" />
+                        </div>
+                        <div class="modal-buttons">
+                            <button onclick="updateStock()" class="btn btn-primary">Guardar</button>
+                            <button onclick="closeEditStockModal()" class="btn btn-secondary">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
             
                 <!-- Modal de Confirmación -->
                 <div id="confirmModal" class="modal" style="display: none;">

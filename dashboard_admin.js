@@ -653,3 +653,62 @@ async function marcarPagoCompletado(idPago) {
         showToast('Error de conexión al actualizar pago', true);
     }
 }
+
+// Editar stock del inventario
+function editarStock(idAlmacen, stock) {
+    const modal = document.getElementById('editStockModal');
+    const idSpan = document.getElementById('editStockId');
+    const input = document.getElementById('editStockInput');
+
+    if (!modal || !idSpan || !input) {
+        console.error('Elementos del modal de stock no encontrados');
+        showToast('No se puede abrir el modal de edición', true);
+        return;
+    }
+
+    idSpan.textContent = idAlmacen;
+    input.value = (stock !== undefined && stock !== null) ? stock : 0;
+    modal.style.display = 'block';
+    input.focus();
+}
+
+function closeEditStockModal() {
+    const modal = document.getElementById('editStockModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function updateStock() {
+    const id = document.getElementById('editStockId')?.textContent;
+    const input = document.getElementById('editStockInput');
+    if (!id || !input) {
+        showToast('Datos inválidos', true);
+        return;
+    }
+
+    const nuevoStock = parseInt(input.value, 10);
+    if (isNaN(nuevoStock) || nuevoStock < 0) {
+        showToast('Ingrese un stock válido (>= 0)', true);
+        return;
+    }
+
+    try {
+        const response = await fetch('api/admin_inventario.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_almacen: id, stock: nuevoStock, _method: 'PUT' })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            closeEditStockModal();
+            loadSectionData('inventario');
+            loadDashboardData();
+            showToast('Stock actualizado correctamente');
+        } else {
+            showToast('Error: ' + (data.message || 'No se pudo actualizar'), true);
+        }
+    } catch (error) {
+        console.error('Error actualizando stock:', error);
+        showToast('Error de conexión al actualizar stock', true);
+    }
+}

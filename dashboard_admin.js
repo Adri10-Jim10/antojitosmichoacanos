@@ -339,7 +339,6 @@ function renderSectionTable(sectionName, data) {
                     <td>${item.rol || 'cliente'}</td>
                     <td>${fechaRegistro}</td>
                     <td>
-                        <button class="btn btn-editar" onclick="editUser(${item.id_usuario})">Editar</button>
                         ${item.rol !== 'administrador' ? `<button class="btn btn-eliminar" onclick="deleteUser(${item.id_usuario})">Eliminar</button>` : ''}
                     </td>
                 `;
@@ -471,11 +470,6 @@ async function updateOrderStatus() {
         console.error('Error actualizando estado:', error);
         showToast('Error de conexión al actualizar el estado', true);
     }
-}
-
-function editUser(userId) {
-    showToast(`Editar usuario #${userId} - En desarrollo`);
-    // Implementar edición de usuario
 }
 
 function showConfirm(title, message, onConfirm) {

@@ -429,6 +429,9 @@ async function confirmarPago() {
         return;
     }
 
+    const tipoPedidoInput = document.querySelector('input[name="tipo_pedido_pago"]:checked');
+    const tipo_pedido = tipoPedidoInput ? tipoPedidoInput.value : 'local';
+
     const total = carrito.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
 
     try {
@@ -439,8 +442,8 @@ async function confirmarPago() {
             },
             body: JSON.stringify({
                 id_usuario: userId,
-                tipo_pedido: 'online',
-                tipo_venta: 'domicilio',
+                tipo_pedido: tipo_pedido,
+                tipo_venta: 'domicilio', // This might need to be updated based on the new logic
                 total_pedido: total,
                 metodo_pago: metodo_pago,
                 nombre_banco: nombre_banco

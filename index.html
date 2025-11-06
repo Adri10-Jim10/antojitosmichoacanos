@@ -231,16 +231,20 @@
                 </select>
                 
                 <!-- Campos para Tarjeta -->
-                <div id="campos-tarjeta" style="display:none;">
-                    <input id="payment-label" type="text" placeholder="Nombre (ej. Mi tarjeta Visa)" style="margin-top:8px; padding:8px; border-radius:8px; border:1px solid #ddd; width:100%; box-sizing:border-box;">
-                    <input id="payment-number" type="text" placeholder="Número de tarjeta" style="margin-top:8px; padding:8px; border-radius:8px; border:1px solid #ddd; width:100%; box-sizing:border-box;">
-                </div>
-
-
-
-                <div class="modal-buttons" style="margin-top:10px;">
-                    <button onclick="guardarMetodoPago()" class="btn-primary">Guardar método</button>
-                </div>
+                                <div id="campos-tarjeta" style="display:none;">
+                                    <input id="payment-label" type="text" placeholder="Nombre (ej. Mi tarjeta Visa)" style="margin-top:8px; padding:8px; border-radius:8px; border:1px solid #ddd; width:100%; box-sizing:border-box;">
+                                    <input id="payment-number" type="text" placeholder="Número de tarjeta" style="margin-top:8px; padding:8px; border-radius:8px; border:1px solid #ddd; width:100%; box-sizing:border-box;">
+                                </div>
+                
+                                <div id="tipo-pedido-pago" style="margin-top:10px;">
+                                    <p style="margin:0 0 8px 0; font-weight:700;">Tipo de Pedido:</p>
+                                    <label><input type="radio" name="tipo_pedido_pago" value="local" checked> Local</label>
+                                    <label><input type="radio" name="tipo_pedido_pago" value="llevar"> Llevar</label>
+                                </div>
+                
+                                <div class="modal-buttons" style="margin-top:10px;">
+                                    <button onclick="guardarMetodoPago()" class="btn-primary">Guardar método</button>
+                                </div>
             </div>
         </div>
         <div class="modal-buttons" style="padding:16px; display:flex; gap:8px;">

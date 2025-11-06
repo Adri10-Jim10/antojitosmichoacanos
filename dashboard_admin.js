@@ -365,7 +365,6 @@ function renderSectionTable(sectionName, data) {
                     <td>${item.comentario || 'Sin comentario'}</td>
                     <td>${fechaResena}</td>
                     <td>
-                        <button class="btn btn-ver" onclick="viewReview(${item.id_reseña})">Ver</button>
                         <button class="btn btn-eliminar" onclick="deleteReview(${item.id_reseña})">Eliminar</button>
                     </td>
                 `;
@@ -531,9 +530,6 @@ function deleteUser(userId) {
     });
 }
 
-function viewReview(reviewId) {
-    showToast(`Ver reseña #${reviewId} - En desarrollo`);
-}
 
 function deleteReview(reviewId) {
     showConfirm('Eliminar Reseña', '¿Estás seguro de que quieres eliminar esta reseña?', () => {

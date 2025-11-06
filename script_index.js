@@ -112,11 +112,23 @@ async function login() {
 // Registro actualizado para usar API
 async function register() {
     const userInput = document.getElementById('register-user-input');
-    const emailInput = document.querySelector('#register input[type="email"]');
-    const passwordInput = document.querySelector('#register input[type="password"]');
+    const emailInput = document.getElementById('register-email');
+    const passwordInput = document.getElementById('register-password');
+    const confirmInput = document.getElementById('register-confirm-password');
     
-    if (!userInput || !emailInput || !passwordInput) {
+    if (!userInput || !emailInput || !passwordInput || !confirmInput) {
         showToast('Error: Campos no encontrados');
+        return;
+    }
+
+    // Validaciones en cliente: contraseñas iguales y longitud mínima
+    if (passwordInput.value !== confirmInput.value) {
+        showToast('Las contraseñas no coinciden');
+        return;
+    }
+
+    if (passwordInput.value.length < 6) {
+        showToast('La contraseña debe tener al menos 6 caracteres');
         return;
     }
 
@@ -127,9 +139,9 @@ async function register() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                usuario: userInput.value,
+                usuario: userInput.value.trim(),
                 contraseña: passwordInput.value,
-                correo: emailInput.value
+                correo: emailInput.value.trim()
             })
         });
 

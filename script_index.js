@@ -90,6 +90,9 @@ async function login() {
             // Cargar carrito del usuario
             await cargarCarritoUsuario();
             
+            // Renderizar el cuadro de reseña
+            renderReviewBox();
+            
             // Redirigir a dashboard si es admin
             if (data.user.rol === 'administrador') {
                 setTimeout(() => {
@@ -141,6 +144,9 @@ async function register() {
             cerrarModal();
             actualizarHeader();
             showToast('¡Cuenta creada exitosamente!');
+            
+            // Renderizar el cuadro de reseña
+            renderReviewBox();
         } else {
             showToast('Error: ' + data.message);
         }
@@ -707,6 +713,8 @@ function checkLoggedIn() {
         actualizarHeader();
         cargarCarritoUsuario();
     }
+    // renderizar cuadro de reseña (si corresponde)
+    renderReviewBox();
 }
 
 // Inicializar al cargar la página
@@ -786,3 +794,86 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Renderizar el cuadro de reseña (se muestra solo si hay sesión)
+function renderReviewBox() {
+    const container = document.getElementById('review-box-container');
+    if (!container) return;
+
+    if (!isLoggedIn || !userId) {
+        container.innerHTML = '<p style="text-align:center; color:var(--muted);">Inicia sesión para dejar una reseña.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="background:#fff; border:1px solid #eee; padding:16px; border-radius:8px;">
+            <h3 style="margin:0 0 8px 0;">Deja tu reseña</h3>
+            <label style="display:block; font-size:0.9rem; margin-bottom:6px;">
+                Calificación:
+                <select id="review-rating" style="margin-left:8px; padding:6px; border-radius:6px;">
+                    <option value="5">5 - Excelente</option>
+                    <option value="4">4 - Muy bueno</option>
+                    <option value="3">3 - Bueno</option>
+                    <option value="2">2 - Regular</option>
+                    <option value="1">1 - Malo</option>
+                </select>
+            </label>
+            <textarea id="review-comment" placeholder="Escribe tu opinión..." rows="4" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;"></textarea>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <input id="review-order-id" type="text" placeholder="ID de pedido (opcional)" style="padding:8px; border-radius:8px; border:1px solid #ddd; flex:1;">
+                <button class="btn-primary" onclick="submitReview()" style="padding:10px 16px; border-radius:8px;">Enviar reseña</button>
+            </div>
+        </div>
+    `;
+}
+
+// Enviar reseña a la API
+async function submitReview() {
+    if (!isLoggedIn || !userId) {
+        showToast('Inicia sesión para enviar una reseña');
+        abrirModal('login');
+        return;
+    }
+
+    const ratingEl = document.getElementById('review-rating');
+    const commentEl = document.getElementById('review-comment');
+    const orderEl = document.getElementById('review-order-id');
+
+    if (!ratingEl || !commentEl) return;
+
+    const calificacion = parseInt(ratingEl.value) || 5;
+    const comentario = commentEl.value.trim();
+    const id_pedido = orderEl && orderEl.value.trim() ? orderEl.value.trim() : null;
+
+    if (comentario.length === 0) {
+        showToast('Escribe una opinión antes de enviar');
+        return;
+    }
+
+    try {
+        const response = await fetch('api/resenas.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_usuario: userId,
+                id_pedido: id_pedido,
+                calificacion: calificacion,
+                comentario: comentario
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Reseña enviada. Gracias por tu opinión.');
+            // limpiar campos
+            commentEl.value = '';
+            if (orderEl) orderEl.value = '';
+            // opcional: refrescar otras vistas si es necesario
+        } else {
+            showToast('Error: ' + (data.message || 'No se pudo enviar la reseña'));
+        }
+    } catch (error) {
+        console.error('Error enviando reseña:', error);
+        showToast('Error de conexión al enviar la reseña');
+    }
+}

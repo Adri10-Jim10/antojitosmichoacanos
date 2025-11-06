@@ -289,8 +289,6 @@ function renderSectionTable(sectionName, data) {
                 <th>Nombre</th>
                 <th>Precio</th>
                 <th>Categoría</th>
-                <th>Stock</th>
-                <th>Estado</th>
                 <th>Acciones</th>
             `;
             break;
@@ -379,10 +377,7 @@ function renderSectionTable(sectionName, data) {
                     <td>${item.nombre}</td>
                     <td>$${parseFloat(item.precio).toFixed(2)}</td>
                     <td>${item.categoria_nombre || 'Sin categoría'}</td>
-                    <td>${item.stock ?? 'Sin stock'}</td>
-                    <td><span class="badge ${item.activo == 1 ? 'activo' : 'inactivo'}">${item.activo == 1 ? 'Activo' : 'Inactivo'}</span></td>
                     <td>
-                        <button class="btn btn-editar" onclick="editProduct(${item.id_producto})">Editar</button>
                         <button class="btn btn-eliminar" onclick="deleteProduct(${item.id_producto})">Eliminar</button>
                     </td>
                 `;
@@ -584,6 +579,31 @@ function deleteUser(userId) {
         .catch(error => {
             console.error('Error:', error);
             showToast('Error al eliminar usuario', true);
+        });
+    });
+}
+
+function deleteProduct(productId) {
+    showConfirm('Eliminar Producto', '¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.', () => {
+        fetch('api/admin_productos.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id_producto: productId, _method: 'DELETE' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSection('productos'); // Recargar la tabla de productos
+                showToast('Producto eliminado correctamente');
+            } else {
+                showToast('Error: ' + data.message, true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error de conexión al eliminar el producto', true);
         });
     });
 }

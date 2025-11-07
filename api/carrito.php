@@ -59,7 +59,7 @@ switch ($method) {
 
                     $carrito->obtenerCarrito($data->id_usuario);
 
-                    if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio, 'local')) {
+                    if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio)) {
 
                         echo json_encode(["success" => true, "message" => "Producto agregado al carrito"]);
 

@@ -455,7 +455,7 @@ async function confirmarPago() {
             body: JSON.stringify({
                 id_usuario: userId,
                 tipo_pedido: tipo_pedido,
-                tipo_venta: 'domicilio', // This might need to be updated based on the new logic
+                tipo_venta: 'normal',
                 total_pedido: total,
                 metodo_pago: metodo_pago,
                 nombre_banco: nombre_banco

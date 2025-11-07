@@ -160,6 +160,23 @@
                     </div>
                 </div>
 
+                <!-- Modal para Editar Precio de Producto -->
+                <div id="editPriceModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <span class="close-button" onclick="closeEditPriceModal()">&times;</span>
+                        <h2>Cambiar Precio del Producto</h2>
+                        <p><strong>Producto:</strong> <span id="editPriceProductName"></span></p>
+                        <div class="form-group">
+                            <label for="editPriceInput">Nuevo Precio:</label>
+                            <input type="number" id="editPriceInput" min="0" step="0.50" />
+                        </div>
+                        <div class="modal-buttons">
+                            <button onclick="updateProductPrice()" class="btn btn-primary">Guardar</button>
+                            <button onclick="closeEditPriceModal()" class="btn btn-secondary">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Modal para Editar Stock de Inventario -->
                 <div id="editStockModal" class="modal" style="display: none;">
                     <div class="modal-content">

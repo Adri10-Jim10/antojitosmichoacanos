@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 include_once '../config/database.php';
@@ -28,7 +28,7 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
         
-        // Simulación de método DELETE
+        // Simulación de métodos PUT y DELETE
         if (isset($data->_method) && $data->_method === 'DELETE') {
             if (!empty($data->id_producto)) {
                 try {
@@ -46,6 +46,25 @@ switch ($method) {
                 http_response_code(400);
                 echo json_encode(["success" => false, "message" => "ID de producto no proporcionado"]);
             }
+        } elseif (isset($data->_method) && $data->_method === 'PUT') {
+            if (!empty($data->id_producto) && isset($data->precio)) {
+                $query = "UPDATE productos SET precio = :precio WHERE id_producto = :id_producto";
+                $stmt = $db->prepare($query);
+    
+                $stmt->bindParam(':precio', $data->precio);
+                $stmt->bindParam(':id_producto', $data->id_producto);
+    
+                if ($stmt->execute()) {
+                    echo json_encode(["success" => true, "message" => "Precio actualizado correctamente."]);
+                } else {
+                    echo json_encode(["success" => false, "message" => "No se pudo actualizar el precio."]);
+                }
+            } else {
+                echo json_encode(["success" => false, "message" => "Datos incompletos. Se requiere id_producto y precio."]);
+            }
+        } else {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Operación no soportada en POST. Use _method: 'PUT' o 'DELETE'."]);
         }
         break;
 

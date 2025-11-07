@@ -378,6 +378,7 @@ function renderSectionTable(sectionName, data) {
                     <td>$${parseFloat(item.precio).toFixed(2)}</td>
                     <td>${item.categoria_nombre || 'Sin categoría'}</td>
                     <td>
+                        <button class="btn btn-editar" onclick="editProductPrice(${item.id_producto}, ${item.precio}, '${item.nombre}')">Cambiar precio</button>
                         <button class="btn btn-eliminar" onclick="deleteProduct(${item.id_producto})">Eliminar</button>
                     </td>
                 `;
@@ -608,6 +609,54 @@ function deleteProduct(productId) {
     });
 }
 
+function editProductPrice(productId, currentPrice, productName) {
+    const modal = document.getElementById('editPriceModal');
+    const nameSpan = document.getElementById('editPriceProductName');
+    const priceInput = document.getElementById('editPriceInput');
+
+    // Guardar el ID del producto en el modal para usarlo después
+    modal.dataset.productId = productId; 
+
+    nameSpan.textContent = productName;
+    priceInput.value = parseFloat(currentPrice).toFixed(2);
+    modal.style.display = 'block';
+    priceInput.focus();
+}
+
+function closeEditPriceModal() {
+    const modal = document.getElementById('editPriceModal');
+    modal.style.display = 'none';
+}
+
+async function updateProductPrice() {
+    const modal = document.getElementById('editPriceModal');
+    const productId = modal.dataset.productId;
+    const newPrice = document.getElementById('editPriceInput').value;
+
+    if (!productId || newPrice === '' || isNaN(newPrice) || parseFloat(newPrice) < 0) {
+        showToast('Por favor, ingrese un precio válido.', true);
+        return;
+    }
+
+    try {
+        const response = await fetch('api/admin_productos.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_producto: productId, precio: newPrice, _method: 'PUT' })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            closeEditPriceModal();
+            showSection('productos'); // Recargar la sección de productos
+            showToast('Precio del producto actualizado.');
+        } else {
+            showToast('Error: ' + (data.message || 'No se pudo actualizar el precio'), true);
+        }
+    } catch (error) {
+        showToast('Error de conexión al actualizar el precio.', true);
+    }
+}
 
 function deleteReview(reviewId) {
     showConfirm('Eliminar Reseña', '¿Estás seguro de que quieres eliminar esta reseña?', () => {

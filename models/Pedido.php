@@ -86,16 +86,31 @@ class Pedido {
             return null;
         }
 
-        // Obtener detalles (items) del pedido
-        $query_detalles = "SELECT dp.*, pr.nombre as nombre_producto 
-                           FROM detalle_pedidos_normales dp
-                           JOIN productos pr ON dp.id_producto = pr.id_producto
-                           WHERE dp.id_pedido = :id_pedido";
-        
-        $stmt_detalles = $this->conn->prepare($query_detalles);
-        $stmt_detalles->bindParam(":id_pedido", $id_pedido);
-        $stmt_detalles->execute();
-        $pedido_data['detalles'] = $stmt_detalles->fetchAll(PDO::FETCH_ASSOC);
+        // Intentar obtener detalles desde la tabla pedidos_finales (para pedidos nuevos)
+        $query_detalles_pf = "SELECT pf.id_pedido_final, pf.id_producto, pr.nombre as nombre_producto,
+                                     pf.cantidad, pf.precio_unitario, pf.total_linea, pf.fecha_pedido as fecha_linea
+                              FROM pedidos_finales pf
+                              LEFT JOIN productos pr ON pf.id_producto = pr.id_producto
+                              WHERE pf.id_pedido = :id_pedido";
+        $stmt_detalles_pf = $this->conn->prepare($query_detalles_pf);
+        $stmt_detalles_pf->bindParam(":id_pedido", $id_pedido);
+        $stmt_detalles_pf->execute();
+        $detalles = $stmt_detalles_pf->fetchAll(PDO::FETCH_ASSOC);
+
+        // Si no hay detalles en pedidos_finales, mantener compatibilidad con detalle_pedidos_normales
+        if (empty($detalles)) {
+            $query_detalles = "SELECT dp.*, pr.nombre as nombre_producto 
+                               FROM detalle_pedidos_normales dp
+                               JOIN productos pr ON dp.id_producto = pr.id_producto
+                               WHERE dp.id_pedido = :id_pedido";
+            
+            $stmt_detalles = $this->conn->prepare($query_detalles);
+            $stmt_detalles->bindParam(":id_pedido", $id_pedido);
+            $stmt_detalles->execute();
+            $detalles = $stmt_detalles->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        $pedido_data['detalles'] = $detalles;
 
         return $pedido_data;
     }

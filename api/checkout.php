@@ -26,38 +26,85 @@ if (
     !empty($data->metodo_pago)
 ) {
     // Obtener el carrito activo del usuario
-    $carrito->obtenerCarrito($data->id_usuario);
+    // obtenerCarrito() devuelve los items (el método cargarItems interno los monta)
+    $cartItems = $carrito->obtenerCarrito($data->id_usuario);
+    $id_carrito_activo = $carrito->id_carrito ?? null;
 
-    if ($carrito->id_carrito) {
+    if ($id_carrito_activo) {
+        // Normalizar estructura de items para insertar en pedidos_finales
+        $normalizedItems = [];
+        foreach ($cartItems as $it) {
+            // saltar combos (si no quieres insertarlos en pedidos_finales como productos)
+            if (isset($it['tipo']) && $it['tipo'] === 'combo') continue;
+
+            $id_producto = $it['producto_id'] ?? $it['id_producto'] ?? null;
+            $cantidad = $it['cantidad'] ?? ($it['cantidad'] ?? 0);
+            $precio_unitario = $it['precio'] ?? $it['precio_unitario'] ?? 0;
+
+            if ($id_producto !== null) {
+                $normalizedItems[] = [
+                    'id_producto' => $id_producto,
+                    'cantidad' => $cantidad,
+                    'precio_unitario' => $precio_unitario
+                ];
+            }
+        }
+        $cartItems = $normalizedItems;
+    }
+
+    if (!$cartItems || count($cartItems) === 0) {
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "Carrito vacío."]);
+        exit;
+    }
+
+    // Crear pedido + líneas SIN iniciar/gestionar transacción aquí
+    try {
+        // Crear el pedido principal usando tu método checkout (devuelve id_pedido)
         $id_pedido = $carrito->checkout($data->id_usuario, $data->tipo_pedido, $data->tipo_venta, $data->total_pedido);
 
-        if ($id_pedido) {
-            $pago_data = [
-                'id_pedido' => $id_pedido,
-                'id_usuario' => $data->id_usuario,
-                'metodo_pago' => $data->metodo_pago,
-                'nombre_banco' => $data->nombre_banco ?? null,
-                'monto_total' => $data->total_pedido,
-                'estado' => 'completado' // o el estado que corresponda
-            ];
-
-            $id_pago = $pagos->crearPago($pago_data);
-
-            if ($id_pago) {
-                http_response_code(201);
-                echo json_encode(["success" => true, "message" => "Pedido y pago creados exitosamente", "id_pedido" => $id_pedido, "id_pago" => $id_pago]);
-            } else {
-                // Aunque el pago falló, el pedido se creó. Se podría manejar esta inconsistencia.
-                http_response_code(207);
-                echo json_encode(["success" => true, "message" => "Pedido creado, pero error al registrar el pago.", "id_pedido" => $id_pedido]);
-            }
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Error al crear el pedido."]);
+        if (!$id_pedido) {
+            throw new Exception("checkout() devolvió false/null");
         }
-    } else {
-        http_response_code(404);
-        echo json_encode(["success" => false, "message" => "No se encontró un carrito activo para este usuario."]);
+
+        // Insertar cada línea en pedidos_finales usando los items leídos
+        $insertLinea = $db->prepare("
+            INSERT INTO pedidos_finales (id_pedido, id_usuario, id_producto, cantidad, precio_unitario)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        foreach ($cartItems as $item) {
+            $insertLinea->execute([
+                $id_pedido,
+                $data->id_usuario,
+                $item['id_producto'],
+                $item['cantidad'],
+                $item['precio_unitario']
+            ]);
+        }
+
+        // Crear registro de pago
+        $pago_data = [
+            'id_pedido' => $id_pedido,
+            'id_usuario' => $data->id_usuario,
+            'metodo_pago' => $data->metodo_pago,
+            'nombre_banco' => $data->nombre_banco ?? null,
+            'monto_total' => $data->total_pedido,
+            'estado' => 'completado' // o el estado que corresponda
+        ];
+
+        $id_pago = $pagos->crearPago($pago_data);
+
+        if ($id_pago) {
+            http_response_code(201);
+            echo json_encode(["success" => true, "message" => "Pedido y pago creados exitosamente", "id_pedido" => $id_pedido, "id_pago" => $id_pago]);
+        } else {
+            // Aunque el pago falló, el pedido se creó. Se podría manejar esta inconsistencia.
+            http_response_code(207);
+            echo json_encode(["success" => true, "message" => "Pedido creado, pero error al registrar el pago.", "id_pedido" => $id_pedido]);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(["success" => false, "message" => "Error al procesar el pedido: " . $e->getMessage()]);
     }
 } else {
     http_response_code(400);

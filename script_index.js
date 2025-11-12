@@ -8,6 +8,11 @@ let menuItems = [];
 let productoSeleccionado = '';
 let precioSeleccionado = 0;
 let productoSeleccionadoId = 0;
+let preciosConsome = {
+    '1L': 0,
+    '0.5L': 0,
+    '0.25L': 0
+};
 
 // Cargar menú desde la API al iniciar
 async function cargarMenu() {
@@ -54,6 +59,8 @@ function renderizarOfertasProductos(productos) {
         let botonHTML = '';
         if (producto.tipo === 'alimento') {
             botonHTML = `<button class="oferta-card-button" onclick="abrirModalGuisos('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
+        } else if (producto.nombre.toLowerCase().includes('consome') || producto.nombre.toLowerCase().includes('consomé')) {
+            botonHTML = `<button class="oferta-card-button" onclick="abrirModalConsome('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
         } else {
             botonHTML = `<button class="oferta-card-button" onclick="seleccionarBebida('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
         }
@@ -88,6 +95,8 @@ function renderizarMenu(productos) {
         let botonHTML = '';
         if (producto.tipo === 'alimento') {
             botonHTML = `<button onclick="abrirModalGuisos('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Seleccionar guiso</button>`;
+        } else if (producto.nombre.toLowerCase().includes('consome') || producto.nombre.toLowerCase().includes('consomé')) {
+            botonHTML = `<button onclick="abrirModalConsome('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Seleccionar litros</button>`;
         } else {
             botonHTML = `<button onclick="seleccionarBebida('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Seleccionar sabor</button>`;
         }
@@ -720,6 +729,82 @@ function confirmarBebidas() {
     cerrarModalBebidas();
 }
 
+function abrirModalConsome(nombre, precio, idProducto) {
+    productoSeleccionado = nombre;
+    precioSeleccionado = precio;
+    productoSeleccionadoId = idProducto;
+    
+    // Calcular precios por presentación (proporcional)
+    preciosConsome['1L'] = precio;
+    preciosConsome['0.5L'] = Math.round((precio * 0.5) * 100) / 100;
+    preciosConsome['0.25L'] = Math.round((precio * 0.25) * 100) / 100;
+    
+    // Actualizar los precios en el modal
+    document.getElementById('precio-1L').textContent = '$' + preciosConsome['1L'].toFixed(2);
+    document.getElementById('precio-0.5L').textContent = '$' + preciosConsome['0.5L'].toFixed(2);
+    document.getElementById('precio-0.25L').textContent = '$' + preciosConsome['0.25L'].toFixed(2);
+    
+    // Resetear cantidad
+    document.getElementById('cantidad-consome').value = 1;
+    
+    // Seleccionar por defecto 1L
+    document.querySelector('input[name="consome-size"][value="1L"]').checked = true;
+    
+    const modal = document.getElementById('modalConsome');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function cerrarModalConsome() {
+    const modal = document.getElementById('modalConsome');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function cambiarCantidadConsome(cambio) {
+    const input = document.getElementById('cantidad-consome');
+    if (input) {
+        let newValue = parseInt(input.value) + cambio;
+        if (newValue < 1) newValue = 1;
+        input.value = newValue;
+    }
+}
+
+function confirmarConsome() {
+    const sizeSelected = document.querySelector('input[name="consome-size"]:checked').value;
+    const cantidad = parseInt(document.getElementById('cantidad-consome').value) || 1;
+    
+    if (!sizeSelected) {
+        showToast('Selecciona una presentación');
+        return;
+    }
+    
+    if (cantidad === 0) {
+        showToast('Selecciona una cantidad');
+        return;
+    }
+    
+    // Obtener el precio de la presentación seleccionada
+    const precioFinal = preciosConsome[sizeSelected];
+    
+    // Crear nombre descriptivo
+    let nombrePresentacion = '';
+    if (sizeSelected === '1L') nombrePresentacion = '1 Litro';
+    else if (sizeSelected === '0.5L') nombrePresentacion = '1/2 Litro';
+    else if (sizeSelected === '0.25L') nombrePresentacion = '1/4 Litro';
+    
+    agregarAlCarritoBD({
+        id_producto: productoSeleccionadoId,
+        nombre: `${productoSeleccionado} (${nombrePresentacion})`,
+        cantidad: cantidad,
+        precio: precioFinal
+    });
+    
+    cerrarModalConsome();
+}
+
 function actualizarHeader() {
     const userActions = document.querySelector('.user-actions');
     if (userActions && isLoggedIn) {
@@ -804,6 +889,15 @@ window.addEventListener('DOMContentLoaded', () => {
         modalGuisos.addEventListener('click', (e) => {
             if (e.target === modalGuisos) {
                 cerrarModalGuisos();
+            }
+        });
+    }
+
+    const modalConsome = document.getElementById('modalConsome');
+    if (modalConsome) {
+        modalConsome.addEventListener('click', (e) => {
+            if (e.target === modalConsome) {
+                cerrarModalConsome();
             }
         });
     }

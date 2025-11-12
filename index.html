@@ -216,6 +216,56 @@
     </div>
 </div>
 
+<!-- Modal de selección de Consomé -->
+<div class="modal" id="modalConsome" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="tituloConsome">Seleccionar Consomé</h3>
+            <button class="close-modal" onclick="cerrarModalConsome()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Selecciona la presentación:</p>
+
+            <div class="consome-item">
+                <label>
+                    <input type="radio" name="consome-size" value="1L" checked>
+                    <span class="size-label">1 Litro</span>
+                    <span class="size-price" id="precio-1L">$XX</span>
+                </label>
+            </div>
+
+            <div class="consome-item">
+                <label>
+                    <input type="radio" name="consome-size" value="0.5L">
+                    <span class="size-label">1/2 Litro</span>
+                    <span class="size-price" id="precio-0.5L">$XX</span>
+                </label>
+            </div>
+
+            <div class="consome-item">
+                <label>
+                    <input type="radio" name="consome-size" value="0.25L">
+                    <span class="size-label">1/4 Litro</span>
+                    <span class="size-price" id="precio-0.25L">$XX</span>
+                </label>
+            </div>
+
+            <div style="margin-top: 15px; padding: 12px; background: #f9f9f9; border-radius: 8px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                    <span>Cantidad:</span>
+                    <button onclick="cambiarCantidadConsome(-1)" style="width: 32px; height: 32px; border: none; background: var(--accent); color: white; border-radius: 8px; cursor: pointer;">-</button>
+                    <input type="number" id="cantidad-consome" value="1" min="1" style="width: 60px; text-align: center; padding: 8px; border: 1px solid #ccc; border-radius: 8px;">
+                    <button onclick="cambiarCantidadConsome(1)" style="width: 32px; height: 32px; border: none; background: var(--accent); color: white; border-radius: 8px; cursor: pointer;">+</button>
+                </label>
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button class="btn-primary" onclick="confirmarConsome()">Agregar al carrito</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de Métodos de Pago -->
 <div class="modal" id="modalPago" style="display: none;">
     <div class="modal-content">

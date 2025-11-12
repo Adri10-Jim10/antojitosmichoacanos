@@ -24,6 +24,57 @@ async function cargarMenu() {
     }
 }
 
+// Cargar productos en oferta
+async function cargarOfertasProductos() {
+    try {
+        const response = await fetch('api/menu.php');
+        const data = await response.json();
+        
+        if (data.productos) {
+            // Filtrar productos con descuento (o marcar algunos como oferta)
+            // Por ahora mostraremos los primeros 4 productos como oferta
+            const ofertasProductos = data.productos.slice(0, Math.min(4, data.productos.length));
+            renderizarOfertasProductos(ofertasProductos);
+        }
+    } catch (error) {
+        console.error('Error cargando ofertas:', error);
+    }
+}
+
+function renderizarOfertasProductos(productos) {
+    const grid = document.getElementById('ofertas-grid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+
+    productos.forEach(producto => {
+        const card = document.createElement('div');
+        card.className = 'oferta-card';
+        
+        let botonHTML = '';
+        if (producto.tipo === 'alimento') {
+            botonHTML = `<button class="oferta-card-button" onclick="abrirModalGuisos('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
+        } else {
+            botonHTML = `<button class="oferta-card-button" onclick="seleccionarBebida('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
+        }
+
+        const badge = '<div class="oferta-badge">¡OFERTA!</div>';
+
+        card.innerHTML = `
+            ${badge}
+            <img src="${producto.imagen}" alt="${producto.nombre}" class="oferta-card-image" onerror="this.style.display='none'">
+            <div class="oferta-card-content">
+                <h4 class="oferta-card-name">${producto.nombre}</h4>
+                <p class="oferta-card-description">${producto.descripcion || 'Delicioso producto'}</p>
+                <div class="oferta-card-price">$${producto.precio}</div>
+                ${botonHTML}
+            </div>
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
 function renderizarMenu(productos) {
     const grid = document.querySelector('.grid');
     if (!grid) return;
@@ -735,6 +786,7 @@ function checkLoggedIn() {
 // Inicializar al cargar la página
 window.addEventListener('DOMContentLoaded', () => {
     cargarMenu();
+    cargarOfertasProductos();
     checkLoggedIn();
     
     // Cerrar modal al hacer click fuera

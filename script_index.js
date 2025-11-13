@@ -30,56 +30,181 @@ async function cargarMenu() {
 }
 
 // Cargar productos en oferta
+// Reemplazo: cargarOfertasProductos ahora llama a api/ofertas.php y renderiza ofertas (productos + combos)
 async function cargarOfertasProductos() {
     try {
-        const response = await fetch('api/menu.php');
+        const response = await fetch('api/ofertas.php');
         const data = await response.json();
-        
-        if (data.productos) {
-            // Filtrar productos con descuento (o marcar algunos como oferta)
-            // Por ahora mostraremos los primeros 4 productos como oferta
-            const ofertasProductos = data.productos.slice(0, Math.min(4, data.productos.length));
-            renderizarOfertasProductos(ofertasProductos);
+
+        if (data.success && Array.isArray(data.ofertas)) {
+            renderizarOfertasProductos(data.ofertas);
+        } else {
+            // Si no hay ofertas, mostrar mensaje
+            const grid = document.getElementById('ofertas-grid');
+            if (grid) grid.innerHTML = '<p style="text-align:center;">No hay ofertas disponibles.</p>';
         }
     } catch (error) {
         console.error('Error cargando ofertas:', error);
+        const grid = document.getElementById('ofertas-grid');
+        if (grid) grid.innerHTML = '<p style="text-align:center;">Error cargando ofertas.</p>';
     }
 }
 
-function renderizarOfertasProductos(productos) {
+// Nueva renderización para la estructura devuelta por api/ofertas.php
+function renderizarOfertasProductos(ofertas) {
     const grid = document.getElementById('ofertas-grid');
     if (!grid) return;
-    
     grid.innerHTML = '';
 
-    productos.forEach(producto => {
+    ofertas.forEach(oferta => {
         const card = document.createElement('div');
         card.className = 'oferta-card';
-        
-        let botonHTML = '';
-        if (producto.tipo === 'alimento') {
-            botonHTML = `<button class="oferta-card-button" onclick="abrirModalGuisos('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
-        } else if (producto.nombre.toLowerCase().includes('consome') || producto.nombre.toLowerCase().includes('consomé')) {
-            botonHTML = `<button class="oferta-card-button" onclick="abrirModalConsome('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
-        } else {
-            botonHTML = `<button class="oferta-card-button" onclick="seleccionarBebida('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Agregar al carrito</button>`;
+
+        // encabezado oferta
+        const titulo = document.createElement('div');
+        titulo.innerHTML = `<h4 class="oferta-card-name">${oferta.nombre}</h4>
+                            <p class="oferta-card-description">${oferta.descripcion || ''}</p>
+                            <div style="font-size:0.9rem; color:var(--muted); margin-bottom:8px;">Tipo: ${oferta.tipo} · Descuento: ${oferta.descuento_porcentaje}%</div>`;
+
+        // lista de productos en la oferta (precio de oferta)
+        const productosList = document.createElement('div');
+        if (Array.isArray(oferta.productos) && oferta.productos.length) {
+            const ul = document.createElement('div');
+            ul.style.display = 'flex';
+            ul.style.flexDirection = 'column';
+            ul.style.gap = '6px';
+
+            oferta.productos.forEach(prod => {
+                const prodRow = document.createElement('div');
+                prodRow.style.display = 'flex';
+                prodRow.style.justifyContent = 'space-between';
+                prodRow.style.alignItems = 'center';
+                prodRow.innerHTML = `
+                    <div>
+                        <strong>${prod.nombre}</strong>
+                        <div style="font-size:0.85rem; color:var(--muted)">${prod.descripcion || ''}</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div style="font-weight:700; color:var(--accent);">$${(prod.precio_oferta || prod.precio_original || 0).toFixed(2)}</div>
+                        <button class="oferta-card-button" style="margin-top:6px;" onclick="agregarOfertaProductoAlCarrito(${prod.id_producto}, ${ (prod.precio_oferta || prod.precio_original || 0) }, 1)">Agregar</button>
+                    </div>
+                `;
+                ul.appendChild(prodRow);
+            });
+
+            productosList.appendChild(ul);
         }
 
-        const badge = '<div class="oferta-badge">¡OFERTA!</div>';
+        // lista de combos en la oferta
+        const combosList = document.createElement('div');
+        if (Array.isArray(oferta.combos) && oferta.combos.length) {
+            const title = document.createElement('div');
+            title.style.marginTop = '10px';
+            title.innerHTML = `<strong>Combos</strong>`;
+            combosList.appendChild(title);
+
+            oferta.combos.forEach(combo => {
+                const comboRow = document.createElement('div');
+                comboRow.style.display = 'flex';
+                comboRow.style.justifyContent = 'space-between';
+                comboRow.style.alignItems = 'center';
+                comboRow.style.marginTop = '6px';
+                comboRow.innerHTML = `
+                    <div>
+                        <div style="font-weight:700">${combo.nombre}</div>
+                        <div style="font-size:0.85rem; color:var(--muted)">${combo.descripcion || ''}</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div style="font-weight:700; color:var(--accent);">$${(combo.precio_combo || 0).toFixed(2)}</div>
+                        <button class="oferta-card-button" style="margin-top:6px;" onclick="agregarComboAlCarrito(${combo.id_combo}, 1, ${ (combo.precio_combo || 0) })">Agregar combo</button>
+                    </div>
+                `;
+                combosList.appendChild(comboRow);
+            });
+        }
+
+        // imagen / badge si quieres (usar imagen del primer producto si existe)
+        const imagenSrc = (oferta.productos && oferta.productos[0] && oferta.productos[0].imagen) ? oferta.productos[0].imagen : 'img/logo.png';
+        const imgHtml = `<img src="${imagenSrc}" alt="${oferta.nombre}" class="oferta-card-image" onerror="this.style.display='none'">`;
 
         card.innerHTML = `
-            ${badge}
-            <img src="${producto.imagen}" alt="${producto.nombre}" class="oferta-card-image" onerror="this.style.display='none'">
-            <div class="oferta-card-content">
-                <h4 class="oferta-card-name">${producto.nombre}</h4>
-                <p class="oferta-card-description">${producto.descripcion || 'Delicioso producto'}</p>
-                <div class="oferta-card-price">$${producto.precio}</div>
-                ${botonHTML}
+            <div style="position:relative;">
+                <div class="oferta-badge">¡OFERTA!</div>
+                ${imgHtml}
+                <div class="oferta-card-content"></div>
             </div>
         `;
-        
+
+        // insertar el contenido creado dinámicamente dentro de card
+        const content = card.querySelector('.oferta-card-content');
+        content.appendChild(titulo);
+        if (productosList.children.length) content.appendChild(productosList);
+        if (combosList.children.length) content.appendChild(combosList);
+
         grid.appendChild(card);
     });
+}
+
+// Helper: agregar producto de oferta al carrito usando la API existente
+async function agregarOfertaProductoAlCarrito(id_producto, precio, cantidad = 1) {
+    if (!userId) {
+        showToast('Por favor inicia sesión para agregar productos');
+        abrirModal('login');
+        return;
+    }
+    try {
+        const response = await fetch('api/carrito.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_usuario: userId,
+                id_producto: id_producto,
+                cantidad: cantidad,
+                precio: precio
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            await cargarCarritoUsuario();
+            showToast('Producto de oferta agregado al carrito');
+        } else {
+            showToast('Error: ' + data.message);
+        }
+    } catch (err) {
+        console.error('Error al agregar producto de oferta:', err);
+        showToast('Error de conexión');
+    }
+}
+
+// Helper: agregar combo al carrito usando api/carrito_combo.php
+async function agregarComboAlCarrito(id_combo, cantidad = 1, precio = 0) {
+    if (!userId) {
+        showToast('Por favor inicia sesión para agregar combos');
+        abrirModal('login');
+        return;
+    }
+    try {
+        const response = await fetch('api/carrito_combo.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_usuario: userId,
+                id_combo: id_combo,
+                cantidad: cantidad,
+                precio: precio
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            await cargarCarritoUsuario();
+            showToast('Combo agregado al carrito');
+        } else {
+            showToast('Error: ' + data.message);
+        }
+    } catch (err) {
+        console.error('Error al agregar combo:', err);
+        showToast('Error de conexión');
+    }
 }
 
 function renderizarMenu(productos) {

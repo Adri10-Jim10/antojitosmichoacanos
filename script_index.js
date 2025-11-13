@@ -218,9 +218,13 @@ function renderizarMenu(productos) {
         card.className = 'card';
         
         let botonHTML = '';
-        if (producto.tipo === 'alimento') {
+        // DETECCIÓN DE CONSOMÉ primero (para que no entre en 'alimento' y muestre guisos)
+        const nombreLower = (producto.nombre || '').toLowerCase();
+        if (nombreLower.includes('consome') || nombreLower.includes('consomé') || nombreLower.includes('consom')) {
+            botonHTML = `<button onclick="abrirModalConsome('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Seleccionar litros</button>`;
+        } else if (producto.tipo === 'alimento') {
             botonHTML = `<button onclick="abrirModalGuisos('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Seleccionar guiso</button>`;
-        } else if (producto.nombre.toLowerCase().includes('consome') || producto.nombre.toLowerCase().includes('consomé')) {
+        } else if (nombreLower.includes('consome') || nombreLower.includes('consomé')) {
             botonHTML = `<button onclick="abrirModalConsome('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Seleccionar litros</button>`;
         } else {
             botonHTML = `<button onclick="seleccionarBebida('${producto.nombre}', ${producto.precio}, ${producto.id_producto})">Seleccionar sabor</button>`;

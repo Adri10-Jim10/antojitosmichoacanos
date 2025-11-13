@@ -11,6 +11,7 @@ include_once '../models/Producto.php';
 function getProductImage($productName) {
     $name = strtolower($productName);
     
+    if (strpos($name, 'consom') !== false) return 'img/consome.jpg'; // <- agregado (captura consome y consomé)
     if (strpos($name, 'taco') !== false) return 'img/tacos.jpg';
     if (strpos($name, 'quesadilla') !== false) return 'img/quesadillas.jpg';
     if (strpos($name, 'gordita') !== false) return 'img/gorditas.jpg';

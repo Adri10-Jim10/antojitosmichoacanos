@@ -200,6 +200,38 @@ function cerrarModalCombo() {
     if (modal) modal.style.display = 'none';
 }
 
+function createComboModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'modalCombo';
+    modal.style.display = 'none';
+
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="tituloCombo">Personaliza tu Combo</h3>
+                <button class="close-modal" onclick="cerrarModalCombo()">&times;</button>
+            </div>
+            <div class="modal-body" id="combo-items-list">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-primary" onclick="confirmarComboConOpciones()">Confirmar y Agregar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            cerrarModalCombo();
+        }
+    });
+
+    return modal;
+}
+
 async function abrirModalCombo(id_combo, precio_combo) {
     if (!userId) {
         showToast('Por favor, inicia sesión para personalizar un combo.');
@@ -207,12 +239,11 @@ async function abrirModalCombo(id_combo, precio_combo) {
         return;
     }
 
-    const modal = document.getElementById('modalCombo');
+    let modal = document.getElementById('modalCombo');
     if (!modal) {
-        console.error('El modal con id "modalCombo" no se encontró en el DOM.');
-        showToast('Error: No se pudo abrir el personalizador de combos.', true);
-        return;
+        modal = createComboModal();
     }
+    
     const container = document.getElementById('combo-items-list');
     modal.style.display = 'flex';
     container.innerHTML = '<p>Cargando productos del combo...</p>';

@@ -31,6 +31,59 @@ async function cargarMenu() {
     }
 }
 
+// Cargar combos desde la API
+async function cargarCombos() {
+    try {
+        const response = await fetch('api/combos.php');
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.combos)) {
+            renderizarCombos(data.combos);
+        } else {
+            const grid = document.getElementById('combos-grid');
+            if (grid) grid.innerHTML = '<p style="text-align:center;">No hay combos disponibles.</p>';
+        }
+    } catch (error) {
+        console.error('Error cargando combos:', error);
+        const grid = document.getElementById('combos-grid');
+        if (grid) grid.innerHTML = '<p style="text-align:center;">Error cargando combos.</p>';
+    }
+}
+
+// Renderizar combos en grid
+function renderizarCombos(combos) {
+    const grid = document.getElementById('combos-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (!combos || combos.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No hay combos disponibles.</p>';
+        return;
+    }
+
+    combos.forEach(combo => {
+        const card = document.createElement('div');
+        card.className = 'combo-card';
+
+        const imagenSrc = combo.imagen || 'img/logo.png';
+
+        card.innerHTML = `
+            <div style="position:relative;">
+                <div class="combo-badge">¡COMBO!</div>
+                <img src="${imagenSrc}" alt="${combo.nombre}" class="combo-card-image" onerror="this.style.display='none'">
+            </div>
+            <div class="combo-card-content">
+                <h4 class="combo-card-name">${combo.nombre}</h4>
+                <p class="combo-card-description">${combo.descripcion || ''}</p>
+                <div class="combo-card-price">$${(combo.precio_combo || 0).toFixed(2)}</div>
+                <button class="combo-card-button" onclick="agregarComboAlCarrito(${combo.id_combo}, 1, ${combo.precio_combo || 0})">Agregar</button>
+            </div>
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
 // Cargar productos en oferta
 // Reemplazo: cargarOfertasProductos ahora llama a api/ofertas.php y renderiza ofertas (productos + combos)
 async function cargarOfertasProductos() {
@@ -1114,6 +1167,7 @@ function checkLoggedIn() {
 window.addEventListener('DOMContentLoaded', () => {
     cargarMenu();
     cargarOfertasProductos();
+    cargarCombos();
     checkLoggedIn();
     
     // Cerrar modal al hacer click fuera

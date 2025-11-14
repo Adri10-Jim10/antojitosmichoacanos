@@ -430,7 +430,7 @@ function showToast(message, isError = false) {
 async function viewOrder(orderId) {
     const modal = document.getElementById('viewOrderModal');
     const detailsContainer = document.getElementById('viewOrderDetails');
-    
+
     modal.style.display = 'block';
     detailsContainer.innerHTML = '<p>Cargando detalles...</p>';
 
@@ -438,11 +438,11 @@ async function viewOrder(orderId) {
         const response = await fetch(`api/admin_pedidos.php?id_pedido=${orderId}`);
         const data = await response.json();
 
-        if (data.success) {
+        if (data.success && data.data) {
             renderOrderDetails(data.data);
         } else {
-            detailsContainer.innerHTML = `<p>Error: ${data.message}</p>`;
-            showToast('Error: ' + data.message, true);
+            detailsContainer.innerHTML = `<p>Error: ${data.message || 'Respuesta inválida'}</p>`;
+            showToast('Error: ' + (data.message || 'No se pudo cargar pedido'), true);
         }
     } catch (error) {
         console.error('Error fetching order details:', error);
@@ -458,38 +458,95 @@ function closeViewOrderModal() {
 
 function renderOrderDetails(order) {
     const detailsContainer = document.getElementById('viewOrderDetails');
-    if (!order || !order.detalles) {
+    if (!order || !Array.isArray(order.detalles)) {
         detailsContainer.innerHTML = '<p>No se encontraron detalles para este pedido.</p>';
         return;
     }
 
+    // Cabecera resumen (tarjeta superior)
+    const fecha = order.fecha_pedido ? new Date(order.fecha_pedido).toLocaleString() : 'N/A';
+    const tipoPedido = order.tipo_pedido || 'N/A';
+    const estado = order.estado || 'pendiente';
+    const cliente = order.cliente_nombre || 'Cliente';
+    const idPedido = order.id_pedido || '';
+
+    // Calcular total real a partir de detalles (fallback si order.total_pedido no coincide)
+    let totalCalculado = 0;
+    order.detalles.forEach(d => {
+        const subtotal = Number(d.subtotal ?? (d.cantidad * (d.precio_unitario ?? 0)));
+        totalCalculado += subtotal;
+    });
+
+    // Construir tabla de detalles
     let itemsHtml = `
-        <div class="order-items-table">
+        <div class="order-card">
+            <div class="order-card-left">
+                <h3>Pedido #${idPedido}</h3>
+                <p><strong>Cliente:</strong> ${escapeHtml(cliente)}</p>
+                <p><strong>Fecha:</strong> ${escapeHtml(fecha)}</p>
+            </div>
+            <div class="order-card-right">
+                <p><strong>Tipo:</strong> ${escapeHtml(tipoPedido)}</p>
+                <p><strong>Estado:</strong> <span class="badge ${escapeHtml(estado)}">${escapeHtml(estado)}</span></p>
+                <p><strong>Total:</strong> $${Number(order.total_pedido ?? totalCalculado).toFixed(2)}</p>
+            </div>
+        </div>
+
+        <div class="order-items-table modern-table">
             <h4>Productos del Pedido</h4>
             <table>
-                <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Tipo / Especificación</th>
+                        <th style="text-align:center">Cantidad</th>
+                        <th style="text-align:right">Precio Unit.</th>
+                        <th style="text-align:right">Subtotal</th>
+                    </tr>
+                </thead>
                 <tbody>
     `;
+
     order.detalles.forEach(item => {
+        const nombreProducto = item.nombre_producto ?? item.nombre ?? '';
+        const nombreSub = item.nombre_subproducto ?? item.detalle ?? null;
+        const tipoTexto = nombreSub && nombreSub.trim() !== '' ? nombreSub : 'Estándar';
+        const cantidad = Number(item.cantidad ?? 0);
+        const precioUnit = Number(item.precio_unitario ?? 0);
+        const subtotal = Number(item.subtotal ?? (cantidad * precioUnit));
+
         itemsHtml += `
             <tr>
-                <td>${item.nombre_producto}</td>
-                <td>${item.cantidad}</td>
-                <td>$${parseFloat(item.precio_unitario).toFixed(2)}</td>
-                <td>$${(item.cantidad * item.precio_unitario).toFixed(2)}</td>
+                <td>${escapeHtml(nombreProducto)}</td>
+                <td>${escapeHtml(tipoTexto)}</td>
+                <td style="text-align:center">${cantidad}</td>
+                <td style="text-align:right">$${precioUnit.toFixed(2)}</td>
+                <td style="text-align:right">$${subtotal.toFixed(2)}</td>
             </tr>
         `;
     });
-    itemsHtml += '</tbody></table></div>';
 
-    detailsContainer.innerHTML = `
-        <p><strong>ID Pedido:</strong> #${order.id_pedido}</p>
-        <p><strong>Cliente:</strong> ${order.cliente_nombre}</p>
-        <p><strong>Fecha:</strong> ${new Date(order.fecha_pedido).toLocaleString()}</p>
-        <p><strong>Estado:</strong> <span class="badge ${order.estado}">${order.estado}</span></p>
-        <p><strong>Total:</strong> $${parseFloat(order.total_pedido).toFixed(2)}</p>
-        ${itemsHtml}
+    itemsHtml += `
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" style="text-align:right"><strong>Total calculado:</strong></td>
+                        <td style="text-align:right"><strong>$${totalCalculado.toFixed(2)}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     `;
+
+    detailsContainer.innerHTML = itemsHtml;
+}
+
+// helper para escapar HTML (evita XSS)
+function escapeHtml(str) {
+    return String(str ?? '').replace(/&/g, '&amp;')
+                           .replace(/</g, '&lt;')
+                           .replace(/>/g, '&gt;')
+                           .replace(/"/g, '&quot;');
 }
 
 function editOrder(orderId) {

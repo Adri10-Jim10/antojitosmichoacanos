@@ -13,6 +13,8 @@ let preciosConsome = {
     '0.5L': 0,
     '0.25L': 0
 };
+// Agregar mapa temporal para recordar detalle (subproducto) de lo último agregado
+let lastAddedDetails = [];
 
 // Cargar menú desde la API al iniciar
 async function cargarMenu() {
@@ -367,6 +369,29 @@ async function cargarCarritoUsuario() {
         
         if (data.success) {
             carrito = data.items || [];
+
+            // Asociar detalles (subproductos) guardados temporalmente a los items devueltos por la API
+            if (lastAddedDetails.length > 0 && Array.isArray(carrito)) {
+                carrito.forEach(item => {
+                    if (item.detalle) return; // ya tiene detalle
+                    const prodId = item.producto_id ?? item.productoId ?? item.id_producto ?? item.idProducto ?? null;
+                    const precioItem = Number(item.precio ?? item.precio_unitario ?? 0);
+                    const cantidadItem = Number(item.cantidad ?? 0);
+
+                    const matchIndex = lastAddedDetails.findIndex(d =>
+                        Number(d.id_producto) == Number(prodId) &&
+                        Number(d.precio) == precioItem &&
+                        Number(d.cantidad) == cantidadItem
+                    );
+
+                    if (matchIndex !== -1) {
+                        item.detalle = lastAddedDetails[matchIndex].detalle;
+                        // eliminar matched para no reasignarlo varias veces
+                        lastAddedDetails.splice(matchIndex, 1);
+                    }
+                });
+            }
+
             renderCarrito();
         }
     } catch (error) {
@@ -399,6 +424,16 @@ async function agregarAlCarritoBD(producto) {
         const data = await response.json();
         
         if (data.success) {
+            // Guardar temporalmente el detalle para asociarlo cuando se reciba el carrito desde la API
+            if (producto.detalle) {
+                lastAddedDetails.push({
+                    id_producto: producto.id_producto,
+                    cantidad: producto.cantidad,
+                    precio: Number(producto.precio),
+                    detalle: producto.detalle
+                });
+            }
+
             await cargarCarritoUsuario();
             showToast('¡Producto agregado al carrito!');
         } else {
@@ -468,13 +503,17 @@ function renderCarrito() {
     let html = '';
     
     carrito.forEach((item, index) => {
-        const itemTotal = item.cantidad * item.precio;
+        const itemTotal = Number(item.cantidad) * Number(item.precio);
         total += itemTotal;
-        
+
+        // Construir nombre con detalle (subproducto) si existe
+        const detalle = item.detalle ? ` ${item.detalle}` : '';
+        const displayName = `${item.nombre}${detalle}`;
+
         html += `
             <div class="item">
-                <span>${item.nombre} x${item.cantidad}</span>
-                <span>$${itemTotal}</span>
+                <span>${item.cantidad} ${displayName}</span>
+                <span>$${itemTotal.toFixed(2)}</span>
                 <button onclick="eliminarItem(${index})">❌</button>
             </div>
         `;
@@ -810,7 +849,8 @@ async function confirmarGuisos() {
                 id_producto: productoSeleccionadoId,
                 nombre: `${productoSeleccionado} (${sub.nombre})`,
                 cantidad: cantidad,
-                precio: precioUsar
+                precio: precioUsar,
+                detalle: sub.nombre // <-- agregar detalle
             });
         }
     }
@@ -892,7 +932,8 @@ function confirmarBebidas() {
                 id_producto: productoSeleccionadoId,
                 nombre: `${productoSeleccionado} (${sub.nombre})`,
                 cantidad: cantidad,
-                precio: precioUsar
+                precio: precioUsar,
+                detalle: sub.nombre // <-- agregar detalle
             });
             totalBebidas += cantidad;
         }
@@ -991,7 +1032,8 @@ function confirmarConsome() {
         id_producto: productoSeleccionadoId,
         nombre: `${productoSeleccionado} (${sub.nombre})`,
         cantidad: cantidad,
-        precio: precioFinal
+        precio: precioFinal,
+        detalle: sub.nombre // <-- agregar detalle
     });
 
     cerrarModalConsome();

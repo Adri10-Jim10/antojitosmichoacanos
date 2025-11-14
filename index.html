@@ -164,31 +164,9 @@
         <div class="modal-body">
             <p>Selecciona la cantidad de cada guiso:</p>
 
-            <div class="guiso-item">
-                <span>Pastor</span>
-                <div class="cantidad-control">
-                    <button onclick="cambiarCantidad('pastor', -1)">-</button>
-                    <input type="number" id="cantidad-pastor" value="0" min="0">
-                    <button onclick="cambiarCantidad('pastor', 1)">+</button>
-                </div>
-            </div>
-
-            <div class="guiso-item">
-                <span>Asada</span>
-                <div class="cantidad-control">
-                    <button onclick="cambiarCantidad('asada', -1)">-</button>
-                    <input type="number" id="cantidad-asada" value="0" min="0">
-                    <button onclick="cambiarCantidad('asada', 1)">+</button>
-                </div>
-            </div>
-
-            <div class="guiso-item">
-                <span>Surtida</span>
-                <div class="cantidad-control">
-                    <button onclick="cambiarCantidad('surtida', -1)">-</button>
-                    <input type="number" id="cantidad-surtida" value="0" min="0">
-                    <button onclick="cambiarCantidad('surtida', 1)">+</button>
-                </div>
+            <!-- Contenedor dinámico para guisos (llenado desde JS) -->
+            <div id="guisos-list">
+                <!-- Se inyectan los sub_productos aquí -->
             </div>
 
             <div class="modal-buttons">
@@ -207,7 +185,7 @@
         </div>
         <div class="modal-body">
             <div id="opciones-bebidas">
-                <!-- Las opciones de bebidas se agregarán dinámicamente -->
+                <!-- Las opciones de bebidas se agregarán dinámicamente (antes estaba vacío) -->
             </div>
             <div class="modal-buttons">
                 <button class="btn-primary" onclick="confirmarBebidas()">Agregar al carrito</button>
@@ -226,28 +204,9 @@
         <div class="modal-body">
             <p>Selecciona la presentación:</p>
 
-            <div class="consome-item">
-                <label>
-                    <input type="radio" name="consome-size" value="1L" checked>
-                    <span class="size-label">1 Litro</span>
-                    <span class="size-price" id="precio-1L">$XX</span>
-                </label>
-            </div>
-
-            <div class="consome-item">
-                <label>
-                    <input type="radio" name="consome-size" value="0.5L">
-                    <span class="size-label">1/2 Litro</span>
-                    <span class="size-price" id="precio-0.5L">$XX</span>
-                </label>
-            </div>
-
-            <div class="consome-item">
-                <label>
-                    <input type="radio" name="consome-size" value="0.25L">
-                    <span class="size-label">1/4 Litro</span>
-                    <span class="size-price" id="precio-0.25L">$XX</span>
-                </label>
+            <!-- Contenedor dinámico para presentaciones de consomé -->
+            <div id="consome-options">
+                <!-- Radios dinámicos con los sub_productos (nombre / precio) -->
             </div>
 
             <div style="margin-top: 15px; padding: 12px; background: #f9f9f9; border-radius: 8px;">

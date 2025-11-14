@@ -696,115 +696,165 @@ function showTab(tabName) {
     }
 }
 
-function abrirModalGuisos(nombre, precio, idProducto) {
-    productoSeleccionado = nombre;
-    precioSeleccionado = precio;
-    productoSeleccionadoId = idProducto;
-    
-    // Resetear cantidades
-    document.getElementById('cantidad-pastor').value = 0;
-    document.getElementById('cantidad-asada').value = 0;
-    document.getElementById('cantidad-surtida').value = 0;
-    
-    const modal = document.getElementById('modalGuisos');
-    if (modal) {
-        document.getElementById('tituloGuisos').textContent = `Seleccionar Guisos - ${nombre}`;
-        modal.style.display = 'flex';
-    }
+// --- Añadidos: wrapper y cierres de modales ---
+function seleccionarBebida(nombre, precio, idProducto) {
+    // wrapper para mantener compatibilidad con el HTML generado
+    abrirModalBebidas(nombre, precio, idProducto);
 }
 
 function cerrarModalGuisos() {
     const modal = document.getElementById('modalGuisos');
-    if (modal) {
-        modal.style.display = 'none';
+    if (modal) modal.style.display = 'none';
+    // limpiar estado si hace falta
+    currentSubproductos = [];
+}
+
+function cerrarModalBebidas() {
+    const modal = document.getElementById('modalBebidas');
+    if (modal) modal.style.display = 'none';
+    currentSubproductos = [];
+}
+
+function cerrarModalConsome() {
+    const modal = document.getElementById('modalConsome');
+    if (modal) modal.style.display = 'none';
+    currentSubproductos = [];
+}
+
+// Variable para mantener los subproductos cargados en el modal actual
+let currentSubproductos = [];
+
+/**
+ * Fetch de sub_productos por id_producto
+ * Espera respuesta JSON: { success: true, subproductos: [...] } o un array directo.
+ */
+async function fetchSubproductos(id_producto) {
+    try {
+        const res = await fetch(`api/get_sub_productos.php?id_producto=${encodeURIComponent(id_producto)}`);
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.subproductos)) return data.subproductos;
+        return [];
+    } catch (err) {
+        console.error('Error cargando sub_productos:', err);
+        return [];
     }
 }
 
-function cambiarCantidad(tipo, cambio) {
-    const input = document.getElementById(`cantidad-${tipo}`);
-    if (input) {
-        let valor = parseInt(input.value) + cambio;
-        if (valor < 0) valor = 0;
-        input.value = valor;
-    }
-}
+/* ---------- GUISES (antes estático) ---------- */
+async function abrirModalGuisos(nombre, precio, idProducto) {
+    productoSeleccionado = nombre;
+    precioSeleccionado = precio;
+    productoSeleccionadoId = idProducto;
 
-function confirmarGuisos() {
-    const pastor = parseInt(document.getElementById('cantidad-pastor').value) || 0;
-    const asada = parseInt(document.getElementById('cantidad-asada').value) || 0;
-    const surtida = parseInt(document.getElementById('cantidad-surtida').value) || 0;
+    const container = document.getElementById('guisos-list');
+    if (!container) return;
 
-    const totalGuisos = pastor + asada + surtida;
+    container.innerHTML = '<p style="color:var(--muted);">Cargando opciones...</p>';
 
-    if (totalGuisos === 0) {
-        alert('Selecciona al menos un guiso para agregar al carrito.');
+    currentSubproductos = await fetchSubproductos(idProducto);
+
+    if (!currentSubproductos.length) {
+        container.innerHTML = '<p style="text-align:center; color:var(--muted);">No hay guisos disponibles.</p>';
         return;
     }
 
-    // Agregar cada guiso a la BD
-    if (pastor > 0) {
-        agregarAlCarritoBD({
-            id_producto: productoSeleccionadoId,
-            nombre: `${productoSeleccionado} (Pastor x${pastor})`,
-            cantidad: pastor,
-            precio: precioSeleccionado
-        });
+    container.innerHTML = '';
+    currentSubproductos.forEach(sub => {
+        const id = sub.id_subproducto;
+        const nombreSub = sub.nombre;
+        const precioSub = (sub.precio !== null && sub.precio !== undefined) ? parseFloat(sub.precio) : null;
+
+        const div = document.createElement('div');
+        div.className = 'guiso-item';
+        div.innerHTML = `
+            <span>${nombreSub}</span>
+            <div class="cantidad-control">
+                <button onclick="cambiarCantidadSub(${id}, -1)">-</button>
+                <input type="number" id="cantidad-sub-${id}" value="0" min="0">
+                <button onclick="cambiarCantidadSub(${id}, 1)">+</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+
+    document.getElementById('tituloGuisos').textContent = `Seleccionar Guisos - ${nombre}`;
+    const modal = document.getElementById('modalGuisos');
+    if (modal) modal.style.display = 'flex';
+}
+
+function cambiarCantidadSub(idSub, cambio) {
+    const input = document.getElementById(`cantidad-sub-${idSub}`);
+    if (!input) return;
+    let val = parseInt(input.value) || 0;
+    val += cambio;
+    if (val < 0) val = 0;
+    input.value = val;
+}
+
+async function confirmarGuisos() {
+    if (!currentSubproductos.length) {
+        alert('No hay opciones para agregar.');
+        return;
     }
-    
-    if (asada > 0) {
-        agregarAlCarritoBD({
-            id_producto: productoSeleccionadoId,
-            nombre: `${productoSeleccionado} (Asada x${asada})`,
-            cantidad: asada,
-            precio: precioSeleccionado
-        });
+
+    let totalSeleccionados = 0;
+
+    for (const sub of currentSubproductos) {
+        const id = sub.id_subproducto;
+        const cantidad = parseInt(document.getElementById(`cantidad-sub-${id}`).value) || 0;
+        if (cantidad > 0) {
+            totalSeleccionados += cantidad;
+            const precioUsar = (sub.precio !== null && sub.precio !== undefined) ? parseFloat(sub.precio) : precioSeleccionado;
+            agregarAlCarritoBD({
+                id_producto: productoSeleccionadoId,
+                nombre: `${productoSeleccionado} (${sub.nombre})`,
+                cantidad: cantidad,
+                precio: precioUsar
+            });
+        }
     }
-    
-    if (surtida > 0) {
-        agregarAlCarritoBD({
-            id_producto: productoSeleccionadoId,
-            nombre: `${productoSeleccionado} (Surtida x${surtida})`,
-            cantidad: surtida,
-            precio: precioSeleccionado
-        });
+
+    if (totalSeleccionados === 0) {
+        alert('Selecciona al menos un guiso para agregar al carrito.');
+        return;
     }
 
     cerrarModalGuisos();
 }
 
-function seleccionarBebida(nombre, precio, idProducto) {
-    abrirModalBebidas(nombre, precio, idProducto);
-}
-
-function abrirModalBebidas(nombre, precio, idProducto) {
+/* ---------- BEBIDAS (usar sub_productos) ---------- */
+async function abrirModalBebidas(nombre, precio, idProducto) {
     console.log("abrirModalBebidas called with:", nombre, precio, idProducto);
     productoSeleccionado = nombre;
     precioSeleccionado = precio;
     productoSeleccionadoId = idProducto;
 
     const opcionesContainer = document.getElementById('opciones-bebidas');
-    opcionesContainer.innerHTML = ''; // Limpiar opciones anteriores
+    opcionesContainer.innerHTML = '<p style="color:var(--muted);">Cargando opciones...</p>';
 
-    let sabores = [];
-    if (nombre.toLowerCase().includes('aguas')) {
-        sabores = ['Horchata', 'Jamaica', 'Pozol'];
-    } else if (nombre.toLowerCase().includes('refrescos')) {
-        sabores = ['Coca-Cola', 'Fresca', 'Sangria', 'Fanta de naranja', 'Fanta de fresa'];
-    }
+    currentSubproductos = await fetchSubproductos(idProducto);
 
-    sabores.forEach(sabor => {
-        const saborId = sabor.toLowerCase().replace(/\s/g, '-');
-        opcionesContainer.innerHTML += `
-            <div class="guiso-item">
-                <span>${sabor}</span>
+    if (!currentSubproductos.length) {
+        opcionesContainer.innerHTML = '<p style="text-align:center; color:var(--muted);">No hay bebidas disponibles.</p>';
+    } else {
+        opcionesContainer.innerHTML = '';
+        currentSubproductos.forEach(sub => {
+            const id = sub.id_subproducto;
+            const nombreSub = sub.nombre;
+            const div = document.createElement('div');
+            div.className = 'guiso-item';
+            div.innerHTML = `
+                <span>${nombreSub}</span>
                 <div class="cantidad-control">
-                    <button onclick="cambiarCantidadBebida('${saborId}', -1)">-</button>
-                    <input type="number" id="cantidad-${saborId}" value="0" min="0">
-                    <button onclick="cambiarCantidadBebida('${saborId}', 1)">+</button>
+                    <button onclick="cambiarCantidadBebida('sub-${id}', -1)">-</button>
+                    <input type="number" id="cantidad-sub-${id}" value="0" min="0">
+                    <button onclick="cambiarCantidadBebida('sub-${id}', 1)">+</button>
                 </div>
-            </div>
-        `;
-    });
+            `;
+            opcionesContainer.appendChild(div);
+        });
+    }
 
     const modal = document.getElementById('modalBebidas');
     if (modal) {
@@ -813,38 +863,36 @@ function abrirModalBebidas(nombre, precio, idProducto) {
     }
 }
 
-function cerrarModalBebidas() {
-    const modal = document.getElementById('modalBebidas');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
 function cambiarCantidadBebida(sabor, cambio) {
-    const input = document.getElementById(`cantidad-${sabor}`);
-    if (input) {
-        let valor = parseInt(input.value) + cambio;
-        if (valor < 0) valor = 0;
-        input.value = valor;
-    }
+    // sabor viene como 'sub-<id>' en los botones; input id será 'cantidad-sub-<id>'
+    const id = sabor.startsWith('sub-') ? sabor.replace('sub-', '') : sabor;
+    const input = document.getElementById(`cantidad-sub-${id}`);
+    if (!input) return;
+    let valor = parseInt(input.value) || 0;
+    valor += cambio;
+    if (valor < 0) valor = 0;
+    input.value = valor;
 }
 
 function confirmarBebidas() {
     console.log("confirmarBebidas called");
-    const opcionesContainer = document.getElementById('opciones-bebidas');
-    const inputs = opcionesContainer.querySelectorAll('input[type="number"]');
+    if (!currentSubproductos.length) {
+        alert('No hay opciones seleccionadas.');
+        return;
+    }
+
     let totalBebidas = 0;
 
-    inputs.forEach(input => {
-        const cantidad = parseInt(input.value) || 0;
+    currentSubproductos.forEach(sub => {
+        const id = sub.id_subproducto;
+        const cantidad = parseInt(document.getElementById(`cantidad-sub-${id}`).value) || 0;
         if (cantidad > 0) {
-            const saborId = input.id.replace('cantidad-', '');
-            const saborNombre = saborId.charAt(0).toUpperCase() + saborId.slice(1).replace('-', ' ');
+            const precioUsar = (sub.precio !== null && sub.precio !== undefined) ? parseFloat(sub.precio) : precioSeleccionado;
             agregarAlCarritoBD({
                 id_producto: productoSeleccionadoId,
-                nombre: `${productoSeleccionado} (${saborNombre})`,
+                nombre: `${productoSeleccionado} (${sub.nombre})`,
                 cantidad: cantidad,
-                precio: precioSeleccionado
+                precio: precioUsar
             });
             totalBebidas += cantidad;
         }
@@ -858,79 +906,94 @@ function confirmarBebidas() {
     cerrarModalBebidas();
 }
 
-function abrirModalConsome(nombre, precio, idProducto) {
+/* ---------- CONSOMÉ (radios dinámicos) ---------- */
+async function abrirModalConsome(nombre, precio, idProducto) {
     productoSeleccionado = nombre;
     precioSeleccionado = precio;
     productoSeleccionadoId = idProducto;
-    
-    // Calcular precios por presentación (proporcional)
-    preciosConsome['1L'] = precio;
-    preciosConsome['0.5L'] = Math.round((precio * 0.5) * 100) / 100;
-    preciosConsome['0.25L'] = Math.round((precio * 0.25) * 100) / 100;
-    
-    // Actualizar los precios en el modal
-    document.getElementById('precio-1L').textContent = '$' + preciosConsome['1L'].toFixed(2);
-    document.getElementById('precio-0.5L').textContent = '$' + preciosConsome['0.5L'].toFixed(2);
-    document.getElementById('precio-0.25L').textContent = '$' + preciosConsome['0.25L'].toFixed(2);
-    
-    // Resetear cantidad
+
+    const container = document.getElementById('consome-options');
+    container.innerHTML = '<p style="color:var(--muted);">Cargando opciones...</p>';
+
+    currentSubproductos = await fetchSubproductos(idProducto);
+
+    if (!currentSubproductos.length) {
+        container.innerHTML = '<p style="text-align:center; color:var(--muted);">No hay presentaciones disponibles.</p>';
+    } else {
+        container.innerHTML = '';
+        currentSubproductos.forEach((sub, idx) => {
+            const id = sub.id_subproducto;
+            const nombreSub = sub.nombre;
+            // calcular precio: si sub.precio existe usarlo, si no intentar deducir por nombre (1/2, 1/4) respecto a precioSeleccionado
+            let precioSub = null;
+            if (sub.precio !== null && sub.precio !== undefined) {
+                precioSub = parseFloat(sub.precio);
+            } else {
+                const lname = nombreSub.toLowerCase();
+                if (lname.includes('1/2') || lname.includes('1/2 litro') || lname.includes('1/2 lit')) precioSub = Math.round(precioSeleccionado * 0.5 * 100) / 100;
+                else if (lname.includes('1/4') || lname.includes('1/4 litro')) precioSub = Math.round(precioSeleccionado * 0.25 * 100) / 100;
+                else precioSub = precioSeleccionado; // por defecto 1L
+            }
+
+            const label = document.createElement('div');
+            label.className = 'consome-item';
+            label.innerHTML = `
+                <label>
+                    <input type="radio" name="consome-size" value="${id}" ${idx === 0 ? 'checked' : ''}>
+                    <span class="size-label">${nombreSub}</span>
+                    <span class="size-price" id="precio-sub-${id}">$${precioSub.toFixed(2)}</span>
+                </label>
+            `;
+            container.appendChild(label);
+        });
+    }
+
+    // Reset cantidad
     document.getElementById('cantidad-consome').value = 1;
-    
-    // Seleccionar por defecto 1L
-    document.querySelector('input[name="consome-size"][value="1L"]').checked = true;
-    
-    const modal = document.getElementById('modalConsome');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-}
 
-function cerrarModalConsome() {
     const modal = document.getElementById('modalConsome');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-function cambiarCantidadConsome(cambio) {
-    const input = document.getElementById('cantidad-consome');
-    if (input) {
-        let newValue = parseInt(input.value) + cambio;
-        if (newValue < 1) newValue = 1;
-        input.value = newValue;
-    }
+    if (modal) modal.style.display = 'flex';
 }
 
 function confirmarConsome() {
-    const sizeSelected = document.querySelector('input[name="consome-size"]:checked').value;
-    const cantidad = parseInt(document.getElementById('cantidad-consome').value) || 1;
-    
-    if (!sizeSelected) {
+    if (!currentSubproductos.length) {
+        showToast('No hay opciones disponibles.');
+        return;
+    }
+
+    const selectedRadio = document.querySelector('input[name="consome-size"]:checked');
+    if (!selectedRadio) {
         showToast('Selecciona una presentación');
         return;
     }
-    
-    if (cantidad === 0) {
+
+    const idSub = parseInt(selectedRadio.value);
+    const sub = currentSubproductos.find(s => s.id_subproducto == idSub);
+    if (!sub) {
+        showToast('Opción no encontrada');
+        return;
+    }
+
+    const cantidad = parseInt(document.getElementById('cantidad-consome').value) || 1;
+    if (cantidad <= 0) {
         showToast('Selecciona una cantidad');
         return;
     }
-    
-    // Obtener el precio de la presentación seleccionada
-    const precioFinal = preciosConsome[sizeSelected];
-    
-    // Crear nombre descriptivo
-    let nombrePresentacion = '';
-    if (sizeSelected === '1L') nombrePresentacion = '1 Litro';
-    else if (sizeSelected === '0.5L') nombrePresentacion = '1/2 Litro';
-    else if (sizeSelected === '0.25L') nombrePresentacion = '1/4 Litro';
-    
+
+    const precioFinal = (sub.precio !== null && sub.precio !== undefined) ? parseFloat(sub.precio) : (() => {
+        const lname = sub.nombre.toLowerCase();
+        if (lname.includes('1/2') || lname.includes('1/2 litro')) return Math.round(precioSeleccionado * 0.5 * 100) / 100;
+        if (lname.includes('1/4') || lname.includes('1/4 litro')) return Math.round(precioSeleccionado * 0.25 * 100) / 100;
+        return precioSeleccionado;
+    })();
+
     agregarAlCarritoBD({
         id_producto: productoSeleccionadoId,
-        nombre: `${productoSeleccionado} (${nombrePresentacion})`,
+        nombre: `${productoSeleccionado} (${sub.nombre})`,
         cantidad: cantidad,
         precio: precioFinal
     });
-    
+
     cerrarModalConsome();
 }
 

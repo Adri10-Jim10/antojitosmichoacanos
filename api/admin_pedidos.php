@@ -11,23 +11,6 @@ $db = $database->getConnection();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-/**
- * Comprueba si una columna existe en la base de datos actual
- */
-function columnExists(PDO $db, string $table, string $column): bool {
-    $sql = "SELECT COUNT(*) AS cnt
-            FROM information_schema.columns
-            WHERE table_schema = DATABASE()
-              AND table_name = :table
-              AND column_name = :column";
-    $stmt = $db->prepare($sql);
-    $stmt->bindParam(':table', $table);
-    $stmt->bindParam(':column', $column);
-    $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return (int)($row['cnt'] ?? 0) > 0;
-}
-
 try {
     if ($method === 'GET') {
         if (isset($_GET['id_pedido'])) {
@@ -51,100 +34,46 @@ try {
                 exit;
             }
 
-            // Detectar columnas para evitar SQL que referencie columnas inexistentes
-            $pf_has_id_combo = columnExists($db, 'pedidos_finales', 'id_combo');
-            $dpo_has_id_combo = columnExists($db, 'detalle_pedidos_ofertas', 'id_combo');
-            // id_subproducto puede usarse, pero no es necesario para el JOIN de combos; subproductos se unen por id_subproducto si existen
-            $pf_has_id_subproducto = columnExists($db, 'pedidos_finales', 'id_subproducto');
-            $dn_has_id_subproducto = columnExists($db, 'detalle_pedidos_normales', 'id_subproducto');
-            $dpo_has_id_subproducto = columnExists($db, 'detalle_pedidos_ofertas', 'id_subproducto');
-
-            // 1) pedidos_finales
-            if ($pf_has_id_combo) {
-                $sql_pf = "SELECT pf.id_pedido_final AS id_detalle,
-                                  COALESCE(pr.nombre, c.nombre) AS nombre_producto,
-                                  " . ($pf_has_id_subproducto ? "sp.nombre" : "NULL") . " AS nombre_subproducto,
-                                  pf.cantidad,
-                                  pf.precio_unitario,
-                                  (pf.cantidad * pf.precio_unitario) AS subtotal
-                           FROM pedidos_finales pf
-                           LEFT JOIN productos pr ON pf.id_producto = pr.id_producto
-                           LEFT JOIN combos c ON pf.id_combo = c.id_combo
-                           " . ($pf_has_id_subproducto ? "LEFT JOIN sub_productos sp ON pf.id_subproducto = sp.id_subproducto" : "") . "
-                           WHERE pf.id_pedido = :id_pedido";
-            } else {
-                $sql_pf = "SELECT pf.id_pedido_final AS id_detalle,
-                                  pr.nombre AS nombre_producto,
-                                  " . ($pf_has_id_subproducto ? "sp.nombre" : "NULL") . " AS nombre_subproducto,
-                                  pf.cantidad,
-                                  pf.precio_unitario,
-                                  (pf.cantidad * pf.precio_unitario) AS subtotal
-                           FROM pedidos_finales pf
-                           LEFT JOIN productos pr ON pf.id_producto = pr.id_producto
-                           " . ($pf_has_id_subproducto ? "LEFT JOIN sub_productos sp ON pf.id_subproducto = sp.id_subproducto" : "") . "
-                           WHERE pf.id_pedido = :id_pedido";
-            }
-
-            // 2) detalle_pedidos_normales
+            // 1) detalle_pedidos_normales
             $sql_dn = "SELECT dp.id_detalle_pedido AS id_detalle,
                               pr.nombre AS nombre_producto,
-                              " . ($dn_has_id_subproducto ? "sp.nombre" : "NULL") . " AS nombre_subproducto,
+                              sp.nombre AS nombre_subproducto,
                               dp.cantidad,
                               dp.precio_unitario,
                               dp.total_linea AS subtotal
                        FROM detalle_pedidos_normales dp
                        LEFT JOIN productos pr ON dp.id_producto = pr.id_producto
-                       " . ($dn_has_id_subproducto ? "LEFT JOIN sub_productos sp ON dp.id_subproducto = sp.id_subproducto" : "") . "
+                       LEFT JOIN sub_productos sp ON dp.id_subproducto = sp.id_subproducto
                        WHERE dp.id_pedido = :id_pedido";
 
-            // 3) detalle_pedidos_ofertas
-            if ($dpo_has_id_combo) {
-                $sql_do = "SELECT dpo.id_detalle_pedido_oferta AS id_detalle,
-                                  COALESCE(pr.nombre, c.nombre) AS nombre_producto,
-                                  " . ($dpo_has_id_subproducto ? "sp.nombre" : "NULL") . " AS nombre_subproducto,
-                                  dpo.cantidad,
-                                  dpo.precio_unitario,
-                                  dpo.total_linea AS subtotal
-                           FROM detalle_pedidos_ofertas dpo
-                           LEFT JOIN productos_ofertas po ON dpo.id_producto_oferta = po.id_producto_oferta
-                           LEFT JOIN productos pr ON po.id_producto = pr.id_producto
-                           LEFT JOIN combos c ON dpo.id_combo = c.id_combo
-                           " . ($dpo_has_id_subproducto ? "LEFT JOIN sub_productos sp ON dpo.id_subproducto = sp.id_subproducto" : "") . "
-                           WHERE dpo.id_pedido = :id_pedido";
-            } else {
-                $sql_do = "SELECT dpo.id_detalle_pedido_oferta AS id_detalle,
-                                  pr.nombre AS nombre_producto,
-                                  " . ($dpo_has_id_subproducto ? "sp.nombre" : "NULL") . " AS nombre_subproducto,
-                                  dpo.cantidad,
-                                  dpo.precio_unitario,
-                                  dpo.total_linea AS subtotal
-                           FROM detalle_pedidos_ofertas dpo
-                           LEFT JOIN productos_ofertas po ON dpo.id_producto_oferta = po.id_producto_oferta
-                           LEFT JOIN productos pr ON po.id_producto = pr.id_producto
-                           " . ($dpo_has_id_subproducto ? "LEFT JOIN sub_productos sp ON dpo.id_subproducto = sp.id_subproducto" : "") . "
-                           WHERE dpo.id_pedido = :id_pedido";
-            }
+            // 2) detalle_pedidos_ofertas
+            $sql_do = "SELECT dpo.id_detalle_pedido_oferta AS id_detalle,
+                              COALESCE(pr.nombre, c.nombre) AS nombre_producto,
+                              sp.nombre AS nombre_subproducto,
+                              dpo.cantidad,
+                              dpo.precio_unitario,
+                              dpo.total_linea AS subtotal
+                       FROM detalle_pedidos_ofertas dpo
+                       LEFT JOIN productos_ofertas po ON dpo.id_producto_oferta = po.id_producto_oferta
+                       LEFT JOIN productos pr ON po.id_producto = pr.id_producto
+                       LEFT JOIN combos c ON dpo.id_combo = c.id_combo
+                       LEFT JOIN sub_productos sp ON dpo.id_subproducto = sp.id_subproducto
+                       WHERE dpo.id_pedido = :id_pedido";
 
             // Ejecutar y combinar
             $detalles = [];
 
-            $stmt = $db->prepare($sql_pf);
-            $stmt->bindParam(':id_pedido', $id_pedido, PDO::PARAM_INT);
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if ($rows) $detalles = array_merge($detalles, $rows);
+            $stmt_dn = $db->prepare($sql_dn);
+            $stmt_dn->bindParam(':id_pedido', $id_pedido, PDO::PARAM_INT);
+            $stmt_dn->execute();
+            $rows_dn = $stmt_dn->fetchAll(PDO::FETCH_ASSOC);
+            if ($rows_dn) $detalles = array_merge($detalles, $rows_dn);
 
-            $stmt = $db->prepare($sql_dn);
-            $stmt->bindParam(':id_pedido', $id_pedido, PDO::PARAM_INT);
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if ($rows) $detalles = array_merge($detalles, $rows);
-
-            $stmt = $db->prepare($sql_do);
-            $stmt->bindParam(':id_pedido', $id_pedido, PDO::PARAM_INT);
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if ($rows) $detalles = array_merge($detalles, $rows);
+            $stmt_do = $db->prepare($sql_do);
+            $stmt_do->bindParam(':id_pedido', $id_pedido, PDO::PARAM_INT);
+            $stmt_do->execute();
+            $rows_do = $stmt_do->fetchAll(PDO::FETCH_ASSOC);
+            if ($rows_do) $detalles = array_merge($detalles, $rows_do);
 
             // Normalizar nombre_subproducto a null/trim y tipos numéricos
             foreach ($detalles as &$d) {

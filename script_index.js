@@ -31,59 +31,6 @@ async function cargarMenu() {
     }
 }
 
-// Cargar combos desde la API
-async function cargarCombos() {
-    try {
-        const response = await fetch('api/combos.php');
-        const data = await response.json();
-
-        if (data.success && Array.isArray(data.combos)) {
-            renderizarCombos(data.combos);
-        } else {
-            const grid = document.getElementById('combos-grid');
-            if (grid) grid.innerHTML = '<p style="text-align:center;">No hay combos disponibles.</p>';
-        }
-    } catch (error) {
-        console.error('Error cargando combos:', error);
-        const grid = document.getElementById('combos-grid');
-        if (grid) grid.innerHTML = '<p style="text-align:center;">Error cargando combos.</p>';
-    }
-}
-
-// Renderizar combos en grid
-function renderizarCombos(combos) {
-    const grid = document.getElementById('combos-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    if (!combos || combos.length === 0) {
-        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No hay combos disponibles.</p>';
-        return;
-    }
-
-    combos.forEach(combo => {
-        const card = document.createElement('div');
-        card.className = 'combo-card';
-
-        const imagenSrc = combo.imagen || 'img/logo.png';
-
-        card.innerHTML = `
-            <div style="position:relative;">
-                <div class="combo-badge">¡COMBO!</div>
-                <img src="${imagenSrc}" alt="${combo.nombre}" class="combo-card-image" onerror="this.style.display='none'">
-            </div>
-            <div class="combo-card-content">
-                <h4 class="combo-card-name">${combo.nombre}</h4>
-                <p class="combo-card-description">${combo.descripcion || ''}</p>
-                <div class="combo-card-price">$${(combo.precio_combo || 0).toFixed(2)}</div>
-                <button class="combo-card-button" onclick="agregarComboAlCarrito(${combo.id_combo}, 1, ${combo.precio_combo || 0})">Agregar</button>
-            </div>
-        `;
-        
-        grid.appendChild(card);
-    });
-}
-
 // Cargar productos en oferta
 // Reemplazo: cargarOfertasProductos ahora llama a api/ofertas.php y renderiza ofertas (productos + combos)
 async function cargarOfertasProductos() {
@@ -92,10 +39,8 @@ async function cargarOfertasProductos() {
         const data = await response.json();
 
         if (data.success && Array.isArray(data.ofertas)) {
-            renderizarCarruselOfertas(data.ofertas);
             renderizarOfertasProductos(data.ofertas);
         } else {
-            // Si no hay ofertas, mostrar mensaje
             const grid = document.getElementById('ofertas-grid');
             if (grid) grid.innerHTML = '<p style="text-align:center;">No hay ofertas disponibles.</p>';
         }
@@ -106,53 +51,17 @@ async function cargarOfertasProductos() {
     }
 }
 
-// Renderizar el carrusel dinámicamente con las ofertas
-function renderizarCarruselOfertas(ofertas) {
-    const track = document.getElementById('carousel-track');
-    if (!track) return;
-    
-    track.innerHTML = '';
-    
-    if (!ofertas || ofertas.length === 0) {
-        track.innerHTML = '<div style="text-align:center; padding:40px;">No hay ofertas disponibles.</div>';
-        return;
-    }
-
-    ofertas.forEach((oferta, index) => {
-        const slide = document.createElement('div');
-        slide.className = 'carousel-slide';
-        
-        // Obtener imagen del primer producto de la oferta
-        const imagenSrc = (oferta.productos && oferta.productos[0] && oferta.productos[0].imagen) 
-            ? oferta.productos[0].imagen 
-            : 'img/logo.png';
-        
-        slide.innerHTML = `
-            <img src="${imagenSrc}" alt="${oferta.nombre}" onerror="this.style.display='none'">
-            <div class="slide-content">
-                <h3>${oferta.nombre}</h3>
-                <p>${oferta.descripcion || ''}</p>
-                <p style="font-size: 0.9rem; color: var(--muted);">Descuento: ${oferta.descuento_porcentaje}%</p>
-            </div>
-        `;
-        
-        // Establecer posición del slide
-        slide.style.left = `${index * 100}%`;
-        
-        track.appendChild(slide);
-    });
-}
-
-// Nueva renderización para la estructura devuelta por api/ofertas.php
-// Ahora renderiza CADA PRODUCTO en su propio card (no agrupa por oferta)
 function renderizarOfertasProductos(ofertas) {
-    const grid = document.getElementById('ofertas-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
+    const ofertasGrid = document.getElementById('ofertas-grid');
+    const combosGrid = document.getElementById('combos-grid');
+    if (!ofertasGrid || !combosGrid) return;
 
-    // Extraer todos los productos individuales de todas las ofertas
+    ofertasGrid.innerHTML = '';
+    combosGrid.innerHTML = '';
+
     let productosEnOferta = [];
-    
+    let combosEnOferta = [];
+
     ofertas.forEach(oferta => {
         if (Array.isArray(oferta.productos) && oferta.productos.length) {
             oferta.productos.forEach(prod => {
@@ -163,39 +72,66 @@ function renderizarOfertasProductos(ofertas) {
                 });
             });
         }
+        if (Array.isArray(oferta.combos) && oferta.combos.length) {
+            oferta.combos.forEach(combo => {
+                combosEnOferta.push({
+                    ...combo,
+                    oferta_nombre: oferta.nombre
+                });
+            });
+        }
     });
 
-    // Si no hay productos, mostrar mensaje
     if (productosEnOferta.length === 0) {
-        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No hay productos en oferta.</p>';
-        return;
+        ofertasGrid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No hay productos en oferta.</p>';
+    } else {
+        productosEnOferta.forEach(prod => {
+            const card = document.createElement('div');
+            card.className = 'oferta-card';
+            const imagenSrc = prod.imagen || 'img/logo.png';
+            card.innerHTML = `
+                <div style="position:relative;">
+                    <div class="oferta-badge">¡${prod.descuento}% OFF!</div>
+                    <img src="${imagenSrc}" alt="${prod.nombre}" class="oferta-card-image" onerror="this.style.display='none'">
+                </div>
+                <div class="oferta-card-content">
+                    <h4 class="oferta-card-name">${prod.nombre}</h4>
+                    <p class="oferta-card-description">${prod.descripcion || ''}</p>
+                    <div style="margin-bottom:8px;">
+                        <span style="font-size:0.85rem; color:var(--muted); text-decoration:line-through;">$${(prod.precio_original || 0).toFixed(2)}</span>
+                        <div style="font-weight:700; color:var(--accent); font-size:1.2rem;">$${(prod.precio_oferta || 0).toFixed(2)}</div>
+                    </div>
+                    <button class="oferta-card-button" onclick="agregarOfertaProductoAlCarrito(${prod.id_producto}, ${prod.precio_oferta || prod.precio_original || 0}, 1)">Agregar</button>
+                </div>
+            `;
+            ofertasGrid.appendChild(card);
+        });
     }
 
-    // Renderizar cada producto en su propio card
-    productosEnOferta.forEach(prod => {
-        const card = document.createElement('div');
-        card.className = 'oferta-card';
-
-        const imagenSrc = prod.imagen || 'img/logo.png';
-
-        card.innerHTML = `
-            <div style="position:relative;">
-                <div class="oferta-badge">¡${prod.descuento}% OFF!</div>
-                <img src="${imagenSrc}" alt="${prod.nombre}" class="oferta-card-image" onerror="this.style.display='none'">
-            </div>
-            <div class="oferta-card-content">
-                <h4 class="oferta-card-name">${prod.nombre}</h4>
-                <p class="oferta-card-description">${prod.descripcion || ''}</p>
-                <div style="margin-bottom:8px;">
-                    <span style="font-size:0.85rem; color:var(--muted); text-decoration:line-through;">$${(prod.precio_original || 0).toFixed(2)}</span>
-                    <div style="font-weight:700; color:var(--accent); font-size:1.2rem;">$${(prod.precio_oferta || 0).toFixed(2)}</div>
+    if (combosEnOferta.length === 0) {
+        combosGrid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No hay combos disponibles.</p>';
+    } else {
+        combosEnOferta.forEach(combo => {
+            const card = document.createElement('div');
+            card.className = 'oferta-card'; // Reutilizamos el estilo
+            const imagenSrc = 'img/logo.png'; // Placeholder
+            card.innerHTML = `
+                <div style="position:relative;">
+                    <div class="oferta-badge">¡COMBO!</div>
+                    <img src="${imagenSrc}" alt="${combo.nombre}" class="oferta-card-image" onerror="this.style.display='none'">
                 </div>
-                <button class="oferta-card-button" onclick="agregarOfertaProductoAlCarrito(${prod.id_producto}, ${prod.precio_oferta || prod.precio_original || 0}, 1)">Agregar</button>
-            </div>
-        `;
-        
-        grid.appendChild(card);
-    });
+                <div class="oferta-card-content">
+                    <h4 class="oferta-card-name">${combo.nombre}</h4>
+                    <p class="oferta-card-description">${combo.descripcion || ''}</p>
+                    <div style="margin-bottom:8px;">
+                        <div style="font-weight:700; color:var(--accent); font-size:1.2rem;">$${(combo.precio_combo || 0).toFixed(2)}</div>
+                    </div>
+                    <button class="oferta-card-button" onclick="abrirModalCombo(${combo.id_combo}, ${combo.precio_combo || 0})">Personalizar</button>
+                </div>
+            `;
+            combosGrid.appendChild(card);
+        });
+    }
 }
 
 // Helper: agregar producto de oferta al carrito usando la API existente
@@ -229,8 +165,7 @@ async function agregarOfertaProductoAlCarrito(id_producto, precio, cantidad = 1)
     }
 }
 
-// Helper: agregar combo al carrito usando api/carrito_combo.php
-async function agregarComboAlCarrito(id_combo, cantidad = 1, precio = 0) {
+async function agregarComboPorDefecto(id_combo, precio_combo) {
     if (!userId) {
         showToast('Por favor inicia sesión para agregar combos');
         abrirModal('login');
@@ -243,21 +178,153 @@ async function agregarComboAlCarrito(id_combo, cantidad = 1, precio = 0) {
             body: JSON.stringify({
                 id_usuario: userId,
                 id_combo: id_combo,
-                cantidad: cantidad,
-                precio: precio
+                cantidad: 1,
+                precio: precio_combo
             })
         });
         const data = await response.json();
         if (data.success) {
             await cargarCarritoUsuario();
-            showToast('Combo agregado al carrito');
+            showToast('Combo agregado con opciones por defecto');
         } else {
             showToast('Error: ' + data.message);
         }
     } catch (err) {
-        console.error('Error al agregar combo:', err);
+        console.error('Error al agregar combo por defecto:', err);
         showToast('Error de conexión');
     }
+}
+
+function cerrarModalCombo() {
+    const modal = document.getElementById('modalCombo');
+    if (modal) modal.style.display = 'none';
+}
+
+async function abrirModalCombo(id_combo, precio_combo) {
+    if (!userId) {
+        showToast('Por favor, inicia sesión para personalizar un combo.');
+        abrirModal('login');
+        return;
+    }
+
+    const modal = document.getElementById('modalCombo');
+    if (!modal) {
+        console.error('El modal con id "modalCombo" no se encontró en el DOM.');
+        showToast('Error: No se pudo abrir el personalizador de combos.', true);
+        return;
+    }
+    const container = document.getElementById('combo-items-list');
+    modal.style.display = 'flex';
+    container.innerHTML = '<p>Cargando productos del combo...</p>';
+
+    try {
+        const response = await fetch(`api/combo_details.php?id_combo=${id_combo}`);
+        const data = await response.json();
+
+        if (!data.success || !data.productos || data.productos.length === 0) {
+            // Si no hay productos para personalizar, agregarlo por defecto
+            cerrarModalCombo();
+            agregarComboPorDefecto(id_combo, precio_combo);
+            return;
+        }
+
+        currentCombo.id = id_combo;
+        currentCombo.precio = precio_combo;
+        currentCombo.productos = data.productos;
+        container.innerHTML = '';
+
+        let itemIndex = 0;
+        currentCombo.productos.forEach(producto => {
+            for (let i = 0; i < producto.cantidad; i++) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'guiso-item'; // Reutilizando la clase para el estilo
+
+                const label = document.createElement('label');
+                label.htmlFor = `combo-item-${itemIndex}`;
+                label.textContent = `${producto.nombre} (${i + 1} de ${producto.cantidad})`;
+
+                let controlElement;
+
+                if (producto.sub_productos && producto.sub_productos.length > 0) {
+                    controlElement = document.createElement('select');
+                    controlElement.id = `combo-item-${itemIndex}`;
+                    controlElement.dataset.idProducto = producto.id_producto;
+                    controlElement.dataset.precioOriginal = producto.precio;
+                    
+                    producto.sub_productos.forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = sub.id_subproducto;
+                        option.textContent = sub.nombre;
+                        controlElement.appendChild(option);
+                    });
+                } else {
+                    controlElement = document.createElement('input');
+                    controlElement.type = 'hidden';
+                    controlElement.id = `combo-item-${itemIndex}`;
+                    controlElement.dataset.idProducto = producto.id_producto;
+                    controlElement.dataset.precioOriginal = producto.precio;
+                    controlElement.value = 'null';
+                    
+                    const noOptionsSpan = document.createElement('span');
+                    noOptionsSpan.textContent = 'Sin opciones';
+                    
+                    itemDiv.appendChild(label);
+                    itemDiv.appendChild(controlElement);
+                    itemDiv.appendChild(noOptionsSpan);
+                    container.appendChild(itemDiv);
+                    itemIndex++;
+                    continue;
+                }
+                
+                itemDiv.appendChild(label);
+                itemDiv.appendChild(controlElement);
+                container.appendChild(itemDiv);
+                itemIndex++;
+            }
+        });
+
+    } catch (error) {
+        console.error('Error al abrir modal de combo:', error);
+        container.innerHTML = '<p>Error de conexión al cargar el combo.</p>';
+    }
+}
+
+async function confirmarComboConOpciones() {
+    if (!currentCombo.productos || currentCombo.productos.length === 0) {
+        showToast('No hay productos en este combo para agregar.', true);
+        return;
+    }
+
+    const selections = [];
+    const totalIndividualPrice = currentCombo.productos.reduce((total, p) => total + (p.precio * p.cantidad), 0);
+    const discountFactor = totalIndividualPrice > 0 ? currentCombo.precio / totalIndividualPrice : 1;
+
+    const itemElements = document.querySelectorAll('[id^="combo-item-"]');
+    itemElements.forEach(el => {
+        selections.push({
+            id_producto: el.dataset.idProducto,
+            id_subproducto: el.value !== 'null' ? el.value : null,
+            precio_original: parseFloat(el.dataset.precioOriginal),
+            nombre_subproducto: el.tagName === 'SELECT' ? el.options[el.selectedIndex].text : null
+        });
+    });
+
+    for (const selection of selections) {
+        const discountedPrice = selection.precio_original * discountFactor;
+        const productoOriginal = currentCombo.productos.find(p => p.id_producto == selection.id_producto);
+        
+        await agregarAlCarritoBD({
+            id_producto: selection.id_producto,
+            id_subproducto: selection.id_subproducto,
+            nombre: `${productoOriginal.nombre} (Combo)`,
+            cantidad: 1,
+            precio: discountedPrice,
+            detalle: selection.nombre_subproducto
+        });
+    }
+
+    cerrarModalCombo();
+    showToast('¡Combo personalizado agregado al carrito!');
 }
 
 function renderizarMenu(productos) {
@@ -1167,7 +1234,6 @@ function checkLoggedIn() {
 window.addEventListener('DOMContentLoaded', () => {
     cargarMenu();
     cargarOfertasProductos();
-    cargarCombos();
     checkLoggedIn();
     
     // Cerrar modal al hacer click fuera
@@ -1185,6 +1251,15 @@ window.addEventListener('DOMContentLoaded', () => {
         modalGuisos.addEventListener('click', (e) => {
             if (e.target === modalGuisos) {
                 cerrarModalGuisos();
+            }
+        });
+    }
+
+    const modalCombo = document.getElementById('modalCombo');
+    if (modalCombo) {
+        modalCombo.addEventListener('click', (e) => {
+            if (e.target === modalCombo) {
+                cerrarModalCombo();
             }
         });
     }

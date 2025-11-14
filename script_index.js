@@ -408,17 +408,23 @@ async function agregarAlCarritoBD(producto) {
     }
 
     try {
+        const payload = {
+            id_usuario: userId,
+            id_producto: producto.id_producto,
+            cantidad: producto.cantidad,
+            precio: producto.precio
+        };
+        // enviar id_subproducto si viene (para mantener sabor/medida)
+        if (producto.id_subproducto) {
+            payload.id_subproducto = producto.id_subproducto;
+        }
+
         const response = await fetch('api/carrito.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                id_usuario: userId,
-                id_producto: producto.id_producto,
-                cantidad: producto.cantidad,
-                precio: producto.precio
-            })
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();
@@ -430,7 +436,8 @@ async function agregarAlCarritoBD(producto) {
                     id_producto: producto.id_producto,
                     cantidad: producto.cantidad,
                     precio: Number(producto.precio),
-                    detalle: producto.detalle
+                    detalle: producto.detalle,
+                    id_subproducto: producto.id_subproducto ?? null
                 });
             }
 
@@ -847,6 +854,7 @@ async function confirmarGuisos() {
             const precioUsar = (sub.precio !== null && sub.precio !== undefined) ? parseFloat(sub.precio) : precioSeleccionado;
             agregarAlCarritoBD({
                 id_producto: productoSeleccionadoId,
+                id_subproducto: id,
                 nombre: `${productoSeleccionado} (${sub.nombre})`,
                 cantidad: cantidad,
                 precio: precioUsar,
@@ -930,6 +938,7 @@ function confirmarBebidas() {
             const precioUsar = (sub.precio !== null && sub.precio !== undefined) ? parseFloat(sub.precio) : precioSeleccionado;
             agregarAlCarritoBD({
                 id_producto: productoSeleccionadoId,
+                id_subproducto: id,
                 nombre: `${productoSeleccionado} (${sub.nombre})`,
                 cantidad: cantidad,
                 precio: precioUsar,
@@ -1030,6 +1039,7 @@ function confirmarConsome() {
 
     agregarAlCarritoBD({
         id_producto: productoSeleccionadoId,
+        id_subproducto: idSub,
         nombre: `${productoSeleccionado} (${sub.nombre})`,
         cantidad: cantidad,
         precio: precioFinal,

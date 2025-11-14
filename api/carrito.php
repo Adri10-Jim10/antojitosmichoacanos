@@ -59,7 +59,10 @@ switch ($method) {
 
                     $carrito->obtenerCarrito($data->id_usuario);
 
-                    if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio)) {
+                    // aceptar id_subproducto opcional
+                    $id_subproducto = isset($data->id_subproducto) ? $data->id_subproducto : null;
+
+                    if ($carrito->agregarProducto($data->id_producto, $data->cantidad, $data->precio, $id_subproducto)) {
 
                         echo json_encode(["success" => true, "message" => "Producto agregado al carrito"]);
 

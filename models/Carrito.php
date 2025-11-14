@@ -49,10 +49,12 @@ class Carrito {
     private function cargarItems() {
         $items = [];
 
-        // Cargar productos individuales
-        $query_items = "SELECT ci.*, p.nombre, p.descripcion 
+        // Cargar productos individuales (ahora trayendo también id_subproducto y nombre del subproducto si existe)
+        $query_items = "SELECT ci.*, p.nombre, p.descripcion, ci.precio_unitario, ci.cantidad, ci.id_carrito_item, ci.id_subproducto,
+                        sp.nombre AS subproducto_nombre
                        FROM " . $this->table_items . " ci
                        JOIN productos p ON ci.id_producto = p.id_producto
+                       LEFT JOIN sub_productos sp ON ci.id_subproducto = sp.id_subproducto
                        WHERE ci.id_carrito = :id_carrito";
         
         $stmt = $this->conn->prepare($query_items);
@@ -60,6 +62,10 @@ class Carrito {
         $stmt->execute();
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $detalle = null;
+            if (!empty($row['subproducto_nombre'])) {
+                $detalle = $row['subproducto_nombre'];
+            }
             $items[] = [
                 'tipo' => 'producto',
                 'id' => $row['id_carrito_item'],
@@ -67,7 +73,9 @@ class Carrito {
                 'nombre' => $row['nombre'],
                 'cantidad' => $row['cantidad'],
                 'precio' => $row['precio_unitario'],
-                'total' => $row['cantidad'] * $row['precio_unitario']
+                'total' => $row['cantidad'] * $row['precio_unitario'],
+                'id_subproducto' => $row['id_subproducto'] ?? null,
+                'detalle' => $detalle
             ];
         }
 
@@ -97,19 +105,40 @@ class Carrito {
         return $items;
     }
 
-    public function agregarProducto($id_producto, $cantidad, $precio) {
-        $query = "INSERT INTO " . $this->table_items . " 
-                 (id_carrito, id_producto, cantidad, precio_unitario) 
-                 VALUES (:id_carrito, :id_producto, :cantidad, :precio)
-                 ON DUPLICATE KEY UPDATE cantidad = cantidad + :cantidad";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":id_carrito", $this->id_carrito);
-        $stmt->bindParam(":id_producto", $id_producto);
-        $stmt->bindParam(":cantidad", $cantidad);
-        $stmt->bindParam(":precio", $precio);
-        
-        return $stmt->execute();
+    /**
+     * Agregar producto.
+     * Si se provee id_subproducto se inserta siempre una fila nueva (para distinguir sabores/medidas).
+     * Si no se provee id_subproducto se mantiene comportamiento de sumar cantidades por duplicado.
+     */
+    public function agregarProducto($id_producto, $cantidad, $precio, $id_subproducto = null) {
+        if ($id_subproducto !== null) {
+            $query = "INSERT INTO " . $this->table_items . " 
+                     (id_carrito, id_producto, id_subproducto, cantidad, precio_unitario) 
+                     VALUES (:id_carrito, :id_producto, :id_subproducto, :cantidad, :precio)";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":id_carrito", $this->id_carrito);
+            $stmt->bindParam(":id_producto", $id_producto);
+            $stmt->bindParam(":id_subproducto", $id_subproducto);
+            $stmt->bindParam(":cantidad", $cantidad);
+            $stmt->bindParam(":precio", $precio);
+            
+            return $stmt->execute();
+        } else {
+            // Comportamiento anterior (suma si existe entrada igual)
+            $query = "INSERT INTO " . $this->table_items . " 
+                     (id_carrito, id_producto, cantidad, precio_unitario) 
+                     VALUES (:id_carrito, :id_producto, :cantidad, :precio)
+                     ON DUPLICATE KEY UPDATE cantidad = cantidad + :cantidad";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":id_carrito", $this->id_carrito);
+            $stmt->bindParam(":id_producto", $id_producto);
+            $stmt->bindParam(":cantidad", $cantidad);
+            $stmt->bindParam(":precio", $precio);
+            
+            return $stmt->execute();
+        }
     }
 
     public function eliminarItem($id_item, $tipo) {

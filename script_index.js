@@ -39,6 +39,7 @@ async function cargarOfertasProductos() {
         const data = await response.json();
 
         if (data.success && Array.isArray(data.ofertas)) {
+            renderizarCarruselOfertas(data.ofertas);
             renderizarOfertasProductos(data.ofertas);
         } else {
             // Si no hay ofertas, mostrar mensaje
@@ -50,6 +51,43 @@ async function cargarOfertasProductos() {
         const grid = document.getElementById('ofertas-grid');
         if (grid) grid.innerHTML = '<p style="text-align:center;">Error cargando ofertas.</p>';
     }
+}
+
+// Renderizar el carrusel dinámicamente con las ofertas
+function renderizarCarruselOfertas(ofertas) {
+    const track = document.getElementById('carousel-track');
+    if (!track) return;
+    
+    track.innerHTML = '';
+    
+    if (!ofertas || ofertas.length === 0) {
+        track.innerHTML = '<div style="text-align:center; padding:40px;">No hay ofertas disponibles.</div>';
+        return;
+    }
+
+    ofertas.forEach((oferta, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'carousel-slide';
+        
+        // Obtener imagen del primer producto de la oferta
+        const imagenSrc = (oferta.productos && oferta.productos[0] && oferta.productos[0].imagen) 
+            ? oferta.productos[0].imagen 
+            : 'img/logo.png';
+        
+        slide.innerHTML = `
+            <img src="${imagenSrc}" alt="${oferta.nombre}" onerror="this.style.display='none'">
+            <div class="slide-content">
+                <h3>${oferta.nombre}</h3>
+                <p>${oferta.descripcion || ''}</p>
+                <p style="font-size: 0.9rem; color: var(--muted);">Descuento: ${oferta.descuento_porcentaje}%</p>
+            </div>
+        `;
+        
+        // Establecer posición del slide
+        slide.style.left = `${index * 100}%`;
+        
+        track.appendChild(slide);
+    });
 }
 
 // Nueva renderización para la estructura devuelta por api/ofertas.php
@@ -1158,20 +1196,19 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Carousel logic
-    const track = document.querySelector('.carousel-track');
-    if (track) {
+    // Carousel logic - Inicializar después de cargar las ofertas
+    const initCarousel = () => {
+        const track = document.querySelector('.carousel-track');
+        if (!track) return;
+        
         const slides = Array.from(track.children);
+        if (slides.length === 0) return;
+        
         const nextButton = document.querySelector('.carousel-button.next');
         const prevButton = document.querySelector('.carousel-button.prev');
 
         // Establecer la primera diapositiva como actual
         slides[0].classList.add('current-slide');
-
-        // Arrange the slides next to one another
-        slides.forEach((slide, index) => {
-            slide.style.left = `${index * 100}%`;
-        });
 
         const moveToSlide = (track, currentSlide, targetSlide) => {
             const targetLeft = targetSlide.style.left;
@@ -1192,8 +1229,8 @@ window.addEventListener('DOMContentLoaded', () => {
             }, 3000);
         };
 
-        // Iniciar la rotación automática
-        let autoRotateInterval = startAutoRotation();
+        // Iniciar la rotación automática solo si hay más de una diapositiva
+        let autoRotateInterval = totalSlides > 1 ? startAutoRotation() : null;
 
         // Pausar la rotación automática cuando el mouse está sobre el carrusel
         track.parentElement.addEventListener('mouseenter', () => {
@@ -1205,7 +1242,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Reanudar la rotación automática cuando el mouse sale del carrusel
         track.parentElement.addEventListener('mouseleave', () => {
-            if (!autoRotateInterval) {
+            if (!autoRotateInterval && totalSlides > 1) {
                 autoRotateInterval = startAutoRotation();
             }
         });
@@ -1214,28 +1251,37 @@ window.addEventListener('DOMContentLoaded', () => {
         const resetTimer = () => {
             if (autoRotateInterval) {
                 clearInterval(autoRotateInterval);
-                autoRotateInterval = startAutoRotation();
+                if (totalSlides > 1) {
+                    autoRotateInterval = startAutoRotation();
+                }
             }
         };
 
         // When I click left, move slides to the left
-        prevButton.addEventListener('click', e => {
-            const currentSlide = slides[currentIndex];
-            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-            const prevSlide = slides[currentIndex];
-            moveToSlide(track, currentSlide, prevSlide);
-            resetTimer(); // Reiniciar el temporizador después de la navegación manual
-        });
+        if (prevButton) {
+            prevButton.addEventListener('click', e => {
+                const currentSlide = slides[currentIndex];
+                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                const prevSlide = slides[currentIndex];
+                moveToSlide(track, currentSlide, prevSlide);
+                resetTimer();
+            });
+        }
 
         // When I click right, move slides to the right
-        nextButton.addEventListener('click', e => {
-            const currentSlide = slides[currentIndex];
-            currentIndex = (currentIndex + 1) % totalSlides;
-            const nextSlide = slides[currentIndex];
-            moveToSlide(track, currentSlide, nextSlide);
-            resetTimer(); // Reiniciar el temporizador después de la navegación manual
-        });
-    }
+        if (nextButton) {
+            nextButton.addEventListener('click', e => {
+                const currentSlide = slides[currentIndex];
+                currentIndex = (currentIndex + 1) % totalSlides;
+                const nextSlide = slides[currentIndex];
+                moveToSlide(track, currentSlide, nextSlide);
+                resetTimer();
+            });
+        }
+    };
+
+    // Inicializar carrusel después de un pequeño delay para asegurar que se hayan renderizado las ofertas
+    setTimeout(initCarousel, 100);
 });
 
 // Renderizar el cuadro de reseña (se muestra solo si hay sesión)

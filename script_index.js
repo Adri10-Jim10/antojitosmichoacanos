@@ -91,96 +91,56 @@ function renderizarCarruselOfertas(ofertas) {
 }
 
 // Nueva renderización para la estructura devuelta por api/ofertas.php
+// Ahora renderiza CADA PRODUCTO en su propio card (no agrupa por oferta)
 function renderizarOfertasProductos(ofertas) {
     const grid = document.getElementById('ofertas-grid');
     if (!grid) return;
     grid.innerHTML = '';
 
+    // Extraer todos los productos individuales de todas las ofertas
+    let productosEnOferta = [];
+    
     ofertas.forEach(oferta => {
+        if (Array.isArray(oferta.productos) && oferta.productos.length) {
+            oferta.productos.forEach(prod => {
+                productosEnOferta.push({
+                    ...prod,
+                    oferta_nombre: oferta.nombre,
+                    descuento: oferta.descuento_porcentaje
+                });
+            });
+        }
+    });
+
+    // Si no hay productos, mostrar mensaje
+    if (productosEnOferta.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No hay productos en oferta.</p>';
+        return;
+    }
+
+    // Renderizar cada producto en su propio card
+    productosEnOferta.forEach(prod => {
         const card = document.createElement('div');
         card.className = 'oferta-card';
 
-        // encabezado oferta
-        const titulo = document.createElement('div');
-        titulo.innerHTML = `<h4 class="oferta-card-name">${oferta.nombre}</h4>
-                            <p class="oferta-card-description">${oferta.descripcion || ''}</p>
-                            <div style="font-size:0.9rem; color:var(--muted); margin-bottom:8px;">Tipo: ${oferta.tipo} · Descuento: ${oferta.descuento_porcentaje}%</div>`;
-
-        // lista de productos en la oferta (precio de oferta)
-        const productosList = document.createElement('div');
-        if (Array.isArray(oferta.productos) && oferta.productos.length) {
-            const ul = document.createElement('div');
-            ul.style.display = 'flex';
-            ul.style.flexDirection = 'column';
-            ul.style.gap = '6px';
-
-            oferta.productos.forEach(prod => {
-                const prodRow = document.createElement('div');
-                prodRow.style.display = 'flex';
-                prodRow.style.justifyContent = 'space-between';
-                prodRow.style.alignItems = 'center';
-                prodRow.innerHTML = `
-                    <div>
-                        <strong>${prod.nombre}</strong>
-                        <div style="font-size:0.85rem; color:var(--muted)">${prod.descripcion || ''}</div>
-                    </div>
-                    <div style="text-align:right">
-                        <div style="font-weight:700; color:var(--accent);">$${(prod.precio_oferta || prod.precio_original || 0).toFixed(2)}</div>
-                        <button class="oferta-card-button" style="margin-top:6px;" onclick="agregarOfertaProductoAlCarrito(${prod.id_producto}, ${ (prod.precio_oferta || prod.precio_original || 0) }, 1)">Agregar</button>
-                    </div>
-                `;
-                ul.appendChild(prodRow);
-            });
-
-            productosList.appendChild(ul);
-        }
-
-        // lista de combos en la oferta
-        const combosList = document.createElement('div');
-        if (Array.isArray(oferta.combos) && oferta.combos.length) {
-            const title = document.createElement('div');
-            title.style.marginTop = '10px';
-            title.innerHTML = `<strong>Combos</strong>`;
-            combosList.appendChild(title);
-
-            oferta.combos.forEach(combo => {
-                const comboRow = document.createElement('div');
-                comboRow.style.display = 'flex';
-                comboRow.style.justifyContent = 'space-between';
-                comboRow.style.alignItems = 'center';
-                comboRow.style.marginTop = '6px';
-                comboRow.innerHTML = `
-                    <div>
-                        <div style="font-weight:700">${combo.nombre}</div>
-                        <div style="font-size:0.85rem; color:var(--muted)">${combo.descripcion || ''}</div>
-                    </div>
-                    <div style="text-align:right">
-                        <div style="font-weight:700; color:var(--accent);">$${(combo.precio_combo || 0).toFixed(2)}</div>
-                        <button class="oferta-card-button" style="margin-top:6px;" onclick="agregarComboAlCarrito(${combo.id_combo}, 1, ${ (combo.precio_combo || 0) })">Agregar combo</button>
-                    </div>
-                `;
-                combosList.appendChild(comboRow);
-            });
-        }
-
-        // imagen / badge si quieres (usar imagen del primer producto si existe)
-        const imagenSrc = (oferta.productos && oferta.productos[0] && oferta.productos[0].imagen) ? oferta.productos[0].imagen : 'img/logo.png';
-        const imgHtml = `<img src="${imagenSrc}" alt="${oferta.nombre}" class="oferta-card-image" onerror="this.style.display='none'">`;
+        const imagenSrc = prod.imagen || 'img/logo.png';
 
         card.innerHTML = `
             <div style="position:relative;">
-                <div class="oferta-badge">¡OFERTA!</div>
-                ${imgHtml}
-                <div class="oferta-card-content"></div>
+                <div class="oferta-badge">¡${prod.descuento}% OFF!</div>
+                <img src="${imagenSrc}" alt="${prod.nombre}" class="oferta-card-image" onerror="this.style.display='none'">
+            </div>
+            <div class="oferta-card-content">
+                <h4 class="oferta-card-name">${prod.nombre}</h4>
+                <p class="oferta-card-description">${prod.descripcion || ''}</p>
+                <div style="margin-bottom:8px;">
+                    <span style="font-size:0.85rem; color:var(--muted); text-decoration:line-through;">$${(prod.precio_original || 0).toFixed(2)}</span>
+                    <div style="font-weight:700; color:var(--accent); font-size:1.2rem;">$${(prod.precio_oferta || 0).toFixed(2)}</div>
+                </div>
+                <button class="oferta-card-button" onclick="agregarOfertaProductoAlCarrito(${prod.id_producto}, ${prod.precio_oferta || prod.precio_original || 0}, 1)">Agregar</button>
             </div>
         `;
-
-        // insertar el contenido creado dinámicamente dentro de card
-        const content = card.querySelector('.oferta-card-content');
-        content.appendChild(titulo);
-        if (productosList.children.length) content.appendChild(productosList);
-        if (combosList.children.length) content.appendChild(combosList);
-
+        
         grid.appendChild(card);
     });
 }

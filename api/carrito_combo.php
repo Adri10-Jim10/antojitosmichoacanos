@@ -30,9 +30,20 @@ try {
         $id_carrito = $db->lastInsertId();
     }
 
-    // Insertar en carrito_combos
-    $insCombo = $db->prepare("INSERT INTO carrito_combos (id_carrito, id_combo, cantidad, precio_unitario) VALUES (?, ?, ?, ?)");
-    $ok = $insCombo->execute([$id_carrito, $data->id_combo, $data->cantidad, $data->precio]);
+    // Verificar si el combo ya existe en el carrito
+    $checkStmt = $db->prepare("SELECT id_carrito_combo FROM carrito_combos WHERE id_carrito = ? AND id_combo = ?");
+    $checkStmt->execute([$id_carrito, $data->id_combo]);
+    $existing_combo = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing_combo) {
+        // Actualizar cantidad si ya existe
+        $updateStmt = $db->prepare("UPDATE carrito_combos SET cantidad = cantidad + ? WHERE id_carrito_combo = ?");
+        $ok = $updateStmt->execute([$data->cantidad, $existing_combo['id_carrito_combo']]);
+    } else {
+        // Insertar si no existe
+        $insCombo = $db->prepare("INSERT INTO carrito_combos (id_carrito, id_combo, cantidad, precio_unitario) VALUES (?, ?, ?, ?)");
+        $ok = $insCombo->execute([$id_carrito, $data->id_combo, $data->cantidad, $data->precio]);
+    }
 
     if ($ok) {
         echo json_encode(['success' => true, 'message' => 'Combo agregado al carrito']);

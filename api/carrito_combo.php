@@ -19,13 +19,13 @@ if (empty($data->id_usuario) || empty($data->id_combo) || empty($data->cantidad)
 
 try {
     // Obtener carrito activo (el más reciente) o crear uno nuevo
-    $stmt = $db->prepare("SELECT id_carrito FROM carritos WHERE id_usuario = ? ORDER BY id_carrito DESC LIMIT 1");
+    $stmt = $db->prepare("SELECT id_carrito FROM carritos WHERE id_usuario = ? AND activo = 1 ORDER BY id_carrito DESC LIMIT 1");
     $stmt->execute([$data->id_usuario]);
     $carrito = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($carrito) {
         $id_carrito = $carrito['id_carrito'];
     } else {
-        $ins = $db->prepare("INSERT INTO carritos (id_usuario) VALUES (?)");
+        $ins = $db->prepare("INSERT INTO carritos (id_usuario, activo) VALUES (?, 1)");
         $ins->execute([$data->id_usuario]);
         $id_carrito = $db->lastInsertId();
     }

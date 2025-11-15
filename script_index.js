@@ -114,7 +114,7 @@ function renderizarOfertasProductos(ofertas) {
         combosEnOferta.forEach(combo => {
             const card = document.createElement('div');
             card.className = 'oferta-card'; // Reutilizamos el estilo
-            const imagenSrc = 'img/logo.png'; // Placeholder
+            const imagenSrc = combo.imagen || 'img/logo.png'; // Usar la imagen del combo o un placeholder
             card.innerHTML = `
                 <div style="position:relative;">
                     <div class="oferta-badge">¡COMBO!</div>

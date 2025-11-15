@@ -8,6 +8,13 @@ include_once '../config/database.php';
 
 function getProductImage($productName) {
     $name = strtolower($productName);
+    // Combos
+    if (strpos($name, 'combo familiar') !== false) return 'img/familiar_combo.jpeg';
+    if (strpos($name, 'combo individual') !== false) return 'img/2tacos_mas_1_refresco.jpeg';
+    if (strpos($name, 'combo gorditas') !== false) return 'img/combo_gorditas.jpeg';
+    if (strpos($name, 'combo quesadillas') !== false) return 'img/combo_quesadillas.jpeg';
+    if (strpos($name, 'combo completo') !== false) return 'img/combo_completo.jpeg';
+    // Productos
     if (strpos($name, 'taco') !== false) return 'img/tacos.jpg';
     if (strpos($name, 'quesadilla') !== false) return 'img/quesadillas.jpg';
     if (strpos($name, 'gordita') !== false) return 'img/gorditas.jpg';
@@ -94,7 +101,8 @@ try {
                 'nombre' => $c['nombre'],
                 'descripcion' => $c['descripcion'],
                 'precio_combo' => (float)$c['precio_combo'],
-                'productos' => $comboProductos
+                'productos' => $comboProductos,
+                'imagen' => getProductImage($c['nombre']) // <-- Se agrega la imagen al combo
             ];
         }
 

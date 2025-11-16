@@ -173,20 +173,14 @@ body {
 
 .carousel-slide {
 	flex: 0 0 100%;
-	position: absolute;
 	width: 100%;
 	height: 100%;
-}
-
-.carousel-slide {
-    min-width: 100%;
-    position: absolute;
-    transition: transform 0.5s ease-in-out;
+	position: relative; /* Needed for slide content positioning */
 }
 
 .carousel-slide img {
     width: 100%;
-    height: 300px;
+    height: 100%;
     object-fit: cover;
     display: block;
 }

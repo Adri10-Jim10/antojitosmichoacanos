@@ -1319,85 +1319,68 @@ window.addEventListener('DOMContentLoaded', () => {
     // Carousel logic - Inicializar después de cargar las ofertas
     const initCarousel = () => {
         const track = document.querySelector('.carousel-track');
-        if (!track) return;
-        
+        if (!track || track.children.length === 0) return;
+
         const slides = Array.from(track.children);
-        if (slides.length === 0) return;
-        
         const nextButton = document.querySelector('.carousel-button.next');
         const prevButton = document.querySelector('.carousel-button.prev');
-
-        // Establecer la primera diapositiva como actual
-        slides[0].classList.add('current-slide');
-
-        const moveToSlide = (track, currentSlide, targetSlide) => {
-            const targetLeft = targetSlide.style.left;
-            track.style.transform = `translateX(-${targetLeft})`;
-            currentSlide.classList.remove('current-slide');
-            targetSlide.classList.add('current-slide');
-        }
-
+        
         let currentIndex = 0;
         const totalSlides = slides.length;
 
+        const moveToSlide = (slideIndex) => {
+            // Ensure slideIndex is within bounds
+            const newIndex = (slideIndex + totalSlides) % totalSlides;
+            const slideWidth = slides[0].clientWidth;
+            track.style.transform = `translateX(-${slideWidth * newIndex}px)`;
+            currentIndex = newIndex;
+        };
+
         const startAutoRotation = () => {
             return setInterval(() => {
-                const currentSlide = slides[currentIndex];
-                currentIndex = (currentIndex + 1) % totalSlides;
-                const nextSlide = slides[currentIndex];
-                moveToSlide(track, currentSlide, nextSlide);
+                moveToSlide(currentIndex + 1);
             }, 3000);
         };
 
-        // Iniciar la rotación automática solo si hay más de una diapositiva
         let autoRotateInterval = totalSlides > 1 ? startAutoRotation() : null;
 
-        // Pausar la rotación automática cuando el mouse está sobre el carrusel
-        track.parentElement.addEventListener('mouseenter', () => {
-            if (autoRotateInterval) {
-                clearInterval(autoRotateInterval);
-                autoRotateInterval = null;
-            }
-        });
-
-        // Reanudar la rotación automática cuando el mouse sale del carrusel
-        track.parentElement.addEventListener('mouseleave', () => {
-            if (!autoRotateInterval && totalSlides > 1) {
-                autoRotateInterval = startAutoRotation();
-            }
-        });
-
-        // Reiniciar el temporizador cuando se hace clic en los botones
         const resetTimer = () => {
             if (autoRotateInterval) {
                 clearInterval(autoRotateInterval);
-                if (totalSlides > 1) {
-                    autoRotateInterval = startAutoRotation();
-                }
+            }
+            if (totalSlides > 1) {
+                autoRotateInterval = startAutoRotation();
             }
         };
 
-        // When I click left, move slides to the left
         if (prevButton) {
-            prevButton.addEventListener('click', e => {
-                const currentSlide = slides[currentIndex];
-                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-                const prevSlide = slides[currentIndex];
-                moveToSlide(track, currentSlide, prevSlide);
+            prevButton.addEventListener('click', () => {
+                moveToSlide(currentIndex - 1);
                 resetTimer();
             });
         }
 
-        // When I click right, move slides to the right
         if (nextButton) {
-            nextButton.addEventListener('click', e => {
-                const currentSlide = slides[currentIndex];
-                currentIndex = (currentIndex + 1) % totalSlides;
-                const nextSlide = slides[currentIndex];
-                moveToSlide(track, currentSlide, nextSlide);
+            nextButton.addEventListener('click', () => {
+                moveToSlide(currentIndex + 1);
                 resetTimer();
             });
         }
+
+        track.parentElement.addEventListener('mouseenter', () => {
+            if (autoRotateInterval) {
+                clearInterval(autoRotateInterval);
+            }
+        });
+
+        track.parentElement.addEventListener('mouseleave', () => {
+            resetTimer();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            moveToSlide(currentIndex);
+        });
     };
 
     // Inicializar carrusel después de un pequeño delay para asegurar que se hayan renderizado las ofertas

@@ -14,6 +14,7 @@ let preciosConsome = {
     '0.25L': 0
 };
 // Agregar mapa temporal para recordar detalle (subproducto) de lo último agregado
+let currentCombo = { id: null, precio: 0, productos: [] };
 let lastAddedDetails = [];
 
 // Cargar menú desde la API al iniciar
@@ -126,7 +127,7 @@ function renderizarOfertasProductos(ofertas) {
                     <div style="margin-bottom:8px;">
                         <div style="font-weight:700; color:var(--accent); font-size:1.2rem;">$${(combo.precio_combo || 0).toFixed(2)}</div>
                     </div>
-                    <button class="oferta-card-button" onclick="abrirModalCombo(${combo.id_combo}, ${combo.precio_combo || 0})">Personalizar</button>
+                    <button class="oferta-card-button" onclick="agregarComboPorDefecto(${combo.id_combo}, ${combo.precio_combo || 0})">Agregar</button>
                 </div>
             `;
             combosGrid.appendChild(card);
@@ -253,7 +254,7 @@ async function abrirModalCombo(id_combo, precio_combo) {
         const data = await response.json();
 
         if (!data.success || !data.productos || data.productos.length === 0) {
-            // Si no hay productos para personalizar, agregarlo por defecto
+            // Si no hay productos para personalizar, lo agregamos directamente al carrito.
             cerrarModalCombo();
             agregarComboPorDefecto(id_combo, precio_combo);
             return;

@@ -22,7 +22,7 @@
                 <li onclick="showSection('pagos')">💳 Pagos</li>
                 <li onclick="showSection('resenas')">⭐ Reseñas</li>
                 <li onclick="showSection('productos')">🍕 Productos</li>
-                <li onclick="showSection('inventario')">📦 Inventario</li>
+                <li onclick="showSection('inventario')">📦 Inventario <span class="notification-badge" id="inventario-alert-badge" style="display: none;">0</span></li>
                 <li onclick="logout()">🚪 Cerrar Sesión</li>
             </ul>
         </div>
@@ -58,6 +58,11 @@
                         <div class="stat-number" id="promedio-resenas">0.0</div>
                         <p>Total reseñas: <span id="total-resenas">0</span></p>
                     </div>
+                </div>
+
+                <div id="inventario-alertas" class="content-section">
+                    <h2>Alertas de Inventario</h2>
+                    <div id="lista-alertas" class="loading">Cargando alertas...</div>
                 </div>
 
                 <div class="charts-grid">

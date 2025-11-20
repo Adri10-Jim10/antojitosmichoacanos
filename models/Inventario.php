@@ -31,5 +31,18 @@ class Inventario {
 
         return $stmt->execute();
     }
+
+    // Reducir stock por ID de producto
+    public function reducirStockPorProducto($id_producto, $cantidad) {
+        $query = "UPDATE " . $this->table_name . "
+                  SET stock = stock - :cantidad, fecha_actualizacion = NOW()
+                  WHERE id_producto = :id_producto";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":cantidad", $cantidad);
+        $stmt->bindParam(":id_producto", $id_producto);
+
+        return $stmt->execute();
+    }
 }
 ?>

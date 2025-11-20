@@ -9,11 +9,14 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 include_once '../config/database.php';
 include_once '../models/Carrito.php';
 include_once '../models/Pagos.php';
+include_once '../models/Inventario.php'; // Incluir el modelo de Inventario
 
 $database = new Database();
 $db = $database->getConnection();
 $carrito = new Carrito($db);
 $pagos = new Pagos($db);
+$inventario = new Inventario($db); // Instanciar Inventario
+
 
 $data = json_decode(file_get_contents("php://input"));
 
@@ -92,7 +95,30 @@ try {
         }
     }
 
-    // 4. Crear registro de pago
+    // 4. Reducir stock de bebidas (Refrescos y Aguas Frescas)
+    $query_cat_bebidas = "SELECT id_categoria FROM categorias WHERE nombre IN ('Refrescos', 'Aguas Frescas')";
+    $stmt_cat_bebidas = $db->prepare($query_cat_bebidas);
+    $stmt_cat_bebidas->execute();
+    $id_cats_bebidas = $stmt_cat_bebidas->fetchAll(PDO::FETCH_COLUMN);
+
+    if (!empty($id_cats_bebidas)) {
+        foreach ($cartItems as $item) {
+            if ($item['tipo'] === 'producto') {
+                // Verificar si el producto es una bebida a descontar
+                $query_prod_cat = "SELECT id_categoria FROM productos WHERE id_producto = :id_producto";
+                $stmt_prod_cat = $db->prepare($query_prod_cat);
+                $stmt_prod_cat->execute([':id_producto' => $item['producto_id']]);
+                $id_categoria_producto = $stmt_prod_cat->fetchColumn();
+
+                if (in_array($id_categoria_producto, $id_cats_bebidas)) {
+                    $inventario->reducirStockPorProducto($item['producto_id'], $item['cantidad']);
+                }
+            }
+        }
+    }
+
+
+    // 5. Crear registro de pago
     $pago_data = [
         'id_pedido' => $id_pedido,
         'id_usuario' => $data->id_usuario,
@@ -107,7 +133,7 @@ try {
         throw new Exception("Error al registrar el pago.");
     }
 
-    // 5. Desactivar el carrito
+    // 6. Desactivar el carrito
     $query_desactivar = "UPDATE carritos SET activo = 0 WHERE id_carrito = :id_carrito";
     $stmt_desactivar = $db->prepare($query_desactivar);
     $stmt_desactivar->bindParam(":id_carrito", $id_carrito_activo);
@@ -115,7 +141,7 @@ try {
         throw new Exception("Error al desactivar el carrito.");
     }
 
-    // 6. Confirmar transacción
+    // 7. Confirmar transacción
     $db->commit();
 
     http_response_code(201);

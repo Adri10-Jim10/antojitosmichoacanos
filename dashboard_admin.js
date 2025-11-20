@@ -70,6 +70,46 @@ function showSection(sectionName) {
     loadSectionData(sectionName);
 }
 
+// Cargar datos de alertas de inventario
+async function loadAlertasData() {
+    try {
+        const response = await fetch('api/alertas_inventario.php');
+        const data = await response.json();
+
+        if (data.success) {
+            renderInventarioAlerts(data.alertas);
+        } else {
+            console.error('Error en alertas:', data.message);
+            document.getElementById('lista-alertas').innerHTML = '<p>Error cargando alertas.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading alert data:', error);
+        document.getElementById('lista-alertas').innerHTML = '<p>Error de conexión al cargar alertas.</p>';
+    }
+}
+
+function renderInventarioAlerts(alertas) {
+    const badge = document.getElementById('inventario-alert-badge');
+    const listaContainer = document.getElementById('lista-alertas');
+
+    if (!alertas || alertas.length === 0) {
+        badge.style.display = 'none';
+        listaContainer.innerHTML = '<p>No hay alertas de inventario.</p>';
+        return;
+    }
+
+    badge.textContent = alertas.length;
+    badge.style.display = 'inline-block';
+
+    let html = '<ul>';
+    alertas.forEach(alerta => {
+        html += `<li><strong>${alerta.nombre}:</strong> Quedan solo ${alerta.stock} unidades.</li>`;
+    });
+    html += '</ul>';
+
+    listaContainer.innerHTML = html;
+}
+
 // Cargar datos del dashboard
 async function loadDashboardData() {
     try {
@@ -83,6 +123,7 @@ async function loadDashboardData() {
         } else {
             console.error('Error en dashboard:', data.message);
         }
+        loadAlertasData(); // Cargar alertas
     } catch (error) {
         console.error('Error loading dashboard data:', error);
         document.getElementById('pedidos-recientes').innerHTML = '<p>Error cargando datos del dashboard</p>';
@@ -310,7 +351,14 @@ function renderSectionTable(sectionName, data) {
     html += '</tr></thead><tbody>';
     
     data.forEach(item => {
-        html += '<tr>';
+        let rowClass = '';
+        if (sectionName === 'inventario') {
+            const productName = (item.producto_nombre || '').toLowerCase();
+            if ((productName.includes('refresco') || productName.includes('aguas')) && item.stock <= 5) {
+                rowClass = 'class="low-stock-warning"';
+            }
+        }
+        html += `<tr ${rowClass}>`;
         
         switch(sectionName) {
             case 'pedidos':

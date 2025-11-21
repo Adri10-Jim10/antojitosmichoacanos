@@ -1388,6 +1388,46 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(initCarousel, 100);
 });
 
+// Cargar y renderizar reseñas públicas
+async function cargarResenasPublicas() {
+    const container = document.getElementById('reviews-container');
+    if (!container) return;
+
+    try {
+        // Usamos el mismo endpoint que el admin, asumiendo que es de acceso público para lectura.
+        // Si requiriera autenticación, necesitarías un nuevo endpoint (ej. 'api/public_resenas.php').
+        const response = await fetch('api/admin_resenas.php');
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+            container.innerHTML = '';
+            data.data.forEach(resena => {
+                const card = document.createElement('div');
+                card.className = 'review-card'; // Usaremos este estilo
+
+                const fecha = new Date(resena.fecha_reseña).toLocaleDateString('es-MX', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                card.innerHTML = `
+                    <div class="review-card-header">
+                        <strong class="review-author">${resena.cliente || 'Anónimo'}</strong>
+                        <span class="review-rating">${'⭐'.repeat(resena.calificacion || 0)}</span>
+                    </div>
+                    <p class="review-comment">"${resena.comentario || ''}"</p>
+                    <span class="review-date">${fecha}</span>
+                `;
+                container.appendChild(card);
+            });
+        } else {
+            container.innerHTML = '<p style="text-align:center; color:var(--muted);">Aún no hay reseñas para mostrar.</p>';
+        }
+    } catch (error) {
+        console.error('Error cargando reseñas:', error);
+        container.innerHTML = '<p style="text-align:center; color:var(--muted);">No se pudieron cargar las reseñas en este momento.</p>';
+    }
+}
+
 // Renderizar el cuadro de reseña (se muestra solo si hay sesión)
 function renderReviewBox() {
     const container = document.getElementById('review-box-container');
@@ -1468,3 +1508,5 @@ async function submitReview() {
         showToast('Error de conexión al enviar la reseña');
     }
 }
+
+window.addEventListener('DOMContentLoaded', cargarResenasPublicas);

@@ -16,6 +16,12 @@ let preciosConsome = {
 // Agregar mapa temporal para recordar detalle (subproducto) de lo último agregado
 let currentCombo = { id: null, precio: 0, productos: [] };
 let lastAddedDetails = [];
+// Datos para búsqueda combinada
+let combosList = [];
+let ofertasProductos = []; // productos dentro de ofertas
+let ofertasCombos = []; // combos dentro de ofertas
+let combosLoaded = false;
+let ofertasLoaded = false;
 
 // Cargar menú desde la API al iniciar
 async function cargarMenu() {
@@ -32,6 +38,23 @@ async function cargarMenu() {
     }
 }
 
+// Cargar combos para búsqueda y renderizado
+async function cargarCombos() {
+    try {
+        const res = await fetch('api/combos.php');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.combos)) {
+            combosList = data.combos;
+        } else if (Array.isArray(data)) {
+            combosList = data;
+        }
+        combosLoaded = true;
+    } catch (err) {
+        console.error('Error cargando combos:', err);
+        combosLoaded = false;
+    }
+}
+
 // Cargar productos en oferta
 // Reemplazo: cargarOfertasProductos ahora llama a api/ofertas.php y renderiza ofertas (productos + combos)
 async function cargarOfertasProductos() {
@@ -40,6 +63,22 @@ async function cargarOfertasProductos() {
         const data = await response.json();
 
         if (data.success && Array.isArray(data.ofertas)) {
+            // almacenar ofertas para búsqueda (productos y combos)
+            ofertasProductos = [];
+            ofertasCombos = [];
+            data.ofertas.forEach(oferta => {
+                if (Array.isArray(oferta.productos)) {
+                    oferta.productos.forEach(p => {
+                        ofertasProductos.push({ ...p, oferta_nombre: oferta.nombre, tipo_item: 'oferta_producto' });
+                    });
+                }
+                if (Array.isArray(oferta.combos)) {
+                    oferta.combos.forEach(c => {
+                        ofertasCombos.push({ ...c, oferta_nombre: oferta.nombre, tipo_item: 'oferta_combo' });
+                    });
+                }
+            });
+            ofertasLoaded = true;
             renderizarOfertasProductos(data.ofertas);
         } else {
             const grid = document.getElementById('ofertas-grid');
@@ -937,6 +976,101 @@ async function fetchSubproductos(id_producto) {
     }
 }
 
+// Renderizar resultados de búsqueda en el dropdown
+function renderSearchResults(results, term) {
+    const container = document.getElementById('search-results');
+    if (!container) return;
+    if (!results || results.length === 0) {
+        container.innerHTML = `<div class="no-results">No se encontró "${term}"</div>`;
+        container.style.display = 'block';
+        return;
+    }
+
+    let html = '';
+    results.forEach(item => {
+        const image = item.imagen || item.imagen_combo || 'img/logo.png';
+        const idVal = item.id || item.id_producto || item.id_combo || 0;
+        const precioOferta = item.precio_oferta || item.precio_combo || null;
+        const precioNormal = item.precio_original || item.precio || item.precio_normal || 0;
+        const mostrarPrecio = precioOferta !== null && precioOferta !== undefined ? Number(precioOferta).toFixed(2) : (Number(precioNormal).toFixed ? Number(precioNormal).toFixed(2) : precioNormal);
+
+        // Badge para ofertas
+        const isOferta = (item._tipo && item._tipo.toString().startsWith('oferta')) || item.oferta_nombre;
+        const ofertaNombre = item.oferta_nombre || '';
+
+        html += `
+            <div class="search-item" data-type="${item._tipo}" data-id="${idVal}">
+                <img src="${image}" alt="${(item.nombre || item.nombre_combo) || ''}" onerror="this.style.display='none'">
+                <div class="search-item-info">
+                    <h4>${(item.nombre || item.nombre_combo) || ''}${isOferta ? ` <span class="search-badge">Oferta</span>` : ''}</h4>
+                    <p>` + (isOferta && precioOferta ? `<span style="text-decoration:line-through; color:#888; margin-right:8px;">$${Number(precioNormal).toFixed(2)}</span><span style="color:var(--accent); font-weight:700;">$${Number(precioOferta).toFixed(2)}</span>` : `$${mostrarPrecio}`) + `</p>
+                    ${isOferta && ofertaNombre ? `<small style="color:var(--muted)">${ofertaNombre}</small>` : ''}
+                </div>
+                <div>
+                    <button class="btn-primary" onclick="handleAddFromSearch(event, '${item._tipo}', ${idVal}, ${Number(precioOferta !== null && precioOferta !== undefined ? precioOferta : precioNormal)})">Agregar</button>
+                </div>
+            </div>`;
+    });
+
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+function clearSearchResults() {
+    const container = document.getElementById('search-results');
+    if (!container) return;
+    container.innerHTML = '';
+    container.style.display = 'none';
+}
+
+// Maneja la acción de agregar desde la búsqueda
+async function handleAddFromSearch(event, tipo, id, precio) {
+    event.stopPropagation();
+    if (!userId) {
+        showToast('Por favor inicia sesión para agregar al carrito');
+        abrirModal('login');
+        return;
+    }
+
+    if (tipo === 'producto' || tipo === 'menu_producto') {
+        // intentar abrir modal según tipo o agregar directo si no hay subproductos
+        const sub = await fetchSubproductos(id);
+        if (sub && sub.length > 0) {
+            // decidir tipo de modal por nombre/propiedades
+            const product = menuItems.find(p => Number(p.id_producto || p.id) == Number(id)) || {};
+            const nombre = product.nombre || '';
+            const nombreLower = nombre.toLowerCase();
+            if (nombreLower.includes('consom')) {
+                abrirModalConsome(nombre, precio, id);
+            } else if (product.tipo === 'alimento') {
+                abrirModalGuisos(nombre, precio, id);
+            } else {
+                abrirModalBebidas(nombre, precio, id);
+            }
+            clearSearchResults();
+            return;
+        }
+
+        // si no hay subproductos, agregar directamente
+        await agregarAlCarritoBD({ id_producto: id, cantidad: 1, precio: precio, nombre: 'Producto' });
+        clearSearchResults();
+        return;
+    }
+
+    if (tipo === 'combo' || tipo === 'oferta_combo') {
+        // abrir modal de combo para personalizar o agregar por defecto
+        abrirModalCombo(id, precio);
+        clearSearchResults();
+        return;
+    }
+
+    if (tipo === 'oferta_producto') {
+        await agregarOfertaProductoAlCarrito(id, precio, 1);
+        clearSearchResults();
+        return;
+    }
+}
+
 /* ---------- GUISES (antes estático) ---------- */
 async function abrirModalGuisos(nombre, precio, idProducto) {
     productoSeleccionado = nombre;
@@ -1266,6 +1400,7 @@ function checkLoggedIn() {
 window.addEventListener('DOMContentLoaded', () => {
     cargarMenu();
     cargarOfertasProductos();
+    cargarCombos();
     checkLoggedIn();
     
     // Cerrar modal al hacer click fuera
@@ -1307,13 +1442,76 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredMenu = menuItems.filter(item => 
-                item.nombre.toLowerCase().includes(searchTerm) || 
-                (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm))
-            );
-            renderizarMenu(filteredMenu);
+        // Escuchar entrada y buscar en productos, combos y ofertas
+        searchInput.addEventListener('input', async (e) => {
+            const term = (e.target.value || '').trim().toLowerCase();
+            if (!term) {
+                clearSearchResults();
+                renderizarMenu(menuItems);
+                return;
+            }
+
+            const results = [];
+
+            // Buscar en productos del menú
+            menuItems.forEach(p => {
+                const nombre = (p.nombre || '').toLowerCase();
+                const desc = (p.descripcion || '').toLowerCase();
+                if (nombre.includes(term) || desc.includes(term)) {
+                    results.push({ ...p, _tipo: 'producto', id: p.id_producto || p.id });
+                }
+            });
+
+            // Buscar en productos dentro de ofertas
+            if (ofertasLoaded) {
+                ofertasProductos.forEach(p => {
+                    const nombre = (p.nombre || '').toLowerCase();
+                    const desc = (p.descripcion || '').toLowerCase();
+                    if (nombre.includes(term) || desc.includes(term)) {
+                        results.push({ ...p, _tipo: 'oferta_producto', id: p.id_producto });
+                    }
+                });
+                ofertasCombos.forEach(c => {
+                    const nombre = (c.nombre || c.nombre_combo || '').toLowerCase();
+                    if (nombre.includes(term)) {
+                        results.push({ ...c, _tipo: 'oferta_combo', id: c.id_combo || c.id });
+                    }
+                });
+            }
+
+            // Buscar en combos
+            if (combosLoaded) {
+                combosList.forEach(c => {
+                    const nombre = (c.nombre || c.nombre_combo || '').toLowerCase();
+                    const desc = (c.descripcion || '').toLowerCase();
+                    if (nombre.includes(term) || desc.includes(term)) {
+                        results.push({ ...c, _tipo: 'combo', id: c.id_combo || c.id });
+                    }
+                });
+            }
+
+            // Eliminar duplicados por id + tipo
+            const seen = new Set();
+            const unique = results.filter(r => {
+                const key = `${r._tipo}::${r.id}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            // Limitar resultados
+            const limited = unique.slice(0, 10);
+            renderSearchResults(limited, term);
+        });
+
+        // Cerrar resultados al hacer click fuera
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('search-results');
+            const searchBox = document.querySelector('.search');
+            if (!container || !searchBox) return;
+            if (!searchBox.contains(e.target)) {
+                clearSearchResults();
+            }
         });
     }
 

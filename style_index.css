@@ -25,7 +25,7 @@ body {
 	border-bottom: 1px solid #f0e6e4;
 	position: sticky;
 	top: 0;
-	z-index: 10;
+	z-index: 2000; /* elevado para evitar overlays accidentales */
 }
 
 .logo img {
@@ -795,6 +795,18 @@ body {
 	transition: 0.3s ease;
 }
 
+/* Asegurar que los botones del header reciban clics en toda su área
+   y queden por encima de elementos superpuestos accidentales */
+.user-actions {
+	position: relative;
+	z-index: 2010; /* por encima del header para asegurar prioridad interna */
+}
+.user-actions button {
+	position: relative;
+	z-index: 2015;
+	pointer-events: auto;
+}
+
 .btn-login {
 	background-color: #f64f21;
 	color: #ffffff;
@@ -1129,11 +1141,13 @@ body {
     opacity: 0;
     transform: translateY(-20px);
     transition: all 0.3s ease;
+	pointer-events: none; /* no interceptar clics cuando está oculto */
 }
 
 .toast-notification.show {
     opacity: 1;
     transform: translateY(0);
+	pointer-events: auto; /* permitir interacción (si necesario) cuando se muestra */
 }
 
 .toast-notification .icon {

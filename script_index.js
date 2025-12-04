@@ -929,6 +929,19 @@ function showTab(tabName) {
     if (activeTab) {
         activeTab.style.display = 'block';
     }
+
+    // Actualizar estado visual de los botones de pestañas
+    const tabLinks = document.querySelectorAll('.tab-link');
+    tabLinks.forEach(link => {
+        const target = link.dataset.tab;
+        if (target === tabName) {
+            link.classList.add('active');
+            link.setAttribute('aria-selected', 'true');
+        } else {
+            link.classList.remove('active');
+            link.setAttribute('aria-selected', 'false');
+        }
+    });
 }
 
 // --- Añadidos: wrapper y cierres de modales ---

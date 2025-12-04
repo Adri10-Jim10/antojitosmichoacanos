@@ -136,8 +136,8 @@
         <div class="modal-content" id="modal-content">
             <div class="modal-header">
                 <div class="modal-tabs">
-                    <button class="tab-link active" onclick="showTab('login')">Iniciar sesión</button>
-                    <button class="tab-link" onclick="showTab('register')">Registrarse</button>
+                    <button class="tab-link active" data-tab="login" onclick="showTab('login')">Iniciar sesión</button>
+                    <button class="tab-link" data-tab="register" onclick="showTab('register')">Registrarse</button>
                 </div>
                 <button class="close-modal" onclick="cerrarModal()">&times;</button>
             </div>
@@ -146,7 +146,7 @@
                 <div class="modal-body">
                     <input type="text" id="user-input" placeholder="Usuario o correo">
                     <input type="password" id="login-password" placeholder="Contraseña">
-                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña? Contacta al administrador</a>
                 </div>
                 <div class="modal-buttons">
                     <button class="btn-primary" onclick="login()">Iniciar sesión</button>
@@ -165,13 +165,6 @@
                 </div>
             </div>
 
-            <div class="social-login">
-                <p>O inicia sesión con</p>
-                <div class="social-buttons">
-                    <button class="social-google" onclick="showToast('Login con Google - En desarrollo')">Google</button>
-                    <button class="social-facebook" onclick="showToast('Login con Facebook - En desarrollo')">Facebook</button>
-                </div>
-            </div>
         </div>
     </div>
 

@@ -613,6 +613,18 @@ body {
     background: var(--accent);
 }
 
+/* Mejor visibilidad para pestaña activa */
+.tab-link {
+	position: relative;
+	padding: 10px 16px;
+	border-radius: 8px;
+}
+
+.tab-link.active {
+	background: rgba(217,72,15,0.08);
+	box-shadow: 0 4px 10px rgba(217,72,15,0.08);
+}
+
 .tab-content {
     display: none;
 	padding: 24px;

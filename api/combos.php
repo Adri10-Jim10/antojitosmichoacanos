@@ -20,10 +20,11 @@ $db = $database->getConnection();
 
 try {
     // Obtener combos desde la tabla que mostraste
-    $query = "SELECT id_combo, id_oferta, nombre, descripcion, precio_combo 
-              FROM combos 
-              WHERE activo = 1 
-              ORDER BY id_combo DESC";
+    $query = "SELECT c.id_combo, c.id_oferta, c.nombre, c.descripcion, c.precio_combo 
+              FROM combos c
+              INNER JOIN ofertas o ON c.id_oferta = o.id_oferta
+              WHERE o.activa = 1 
+              ORDER BY c.id_combo DESC";
 
     $stmt = $db->prepare($query);
     $stmt->execute();
